@@ -3499,39 +3499,33 @@ void Refresh_HWP_Cap_Freq(TGrid *grid, DATA_TYPE data[])
 	CPU_STRUCT *SProc = &RO(Shm)->Cpu[cpu];
 	struct FLIP_FLOP *CFlop = &SProc->FlipFlop[!RO(Shm)->Cpu[cpu].Toggle];
 
-	double	Lowest_MHz = ABS_FREQ_MHz(double,
-				SProc->PowerThermal.HWP.Capabilities.Lowest,
-				CFlop->Clock
-		),
-		Efficient_MHz = ABS_FREQ_MHz(double,
-			SProc->PowerThermal.HWP.Capabilities.Most_Efficient,
+	float	Lowest_MHz = ABS_FREQ_MHz(float,
+			SProc->PowerThermal.HWP.Capabilities.fLowest,
 			CFlop->Clock
 		),
-		Guaranteed_MHz = ABS_FREQ_MHz(double,
-				SProc->PowerThermal.HWP.Capabilities.Guaranteed,
-				CFlop->Clock
+		Efficient_MHz = ABS_FREQ_MHz(float,
+			SProc->PowerThermal.HWP.Capabilities.fMost_Efficient,
+			CFlop->Clock
 		),
-		Highest_MHz = ABS_FREQ_MHz(double,
-				SProc->PowerThermal.HWP.Capabilities.Highest,
-				CFlop->Clock
+		Guaranteed_MHz = ABS_FREQ_MHz(float,
+			SProc->PowerThermal.HWP.Capabilities.fGuaranteed,
+			CFlop->Clock
+		),
+		Highest_MHz = ABS_FREQ_MHz(float,
+			SProc->PowerThermal.HWP.Capabilities.fHighest,
+			CFlop->Clock
 		);
-
-	const unsigned int maxRatio = 99;
 
 	if (StrLenFormat(length, item, grid->cell.length + 1,
 		"CPU #%-3u  %7.2f (%3u)  %7.2f (%3u)  %7.2f (%3u)  %7.2f (%3u)",
 		cpu,
-		SProc->PowerThermal.HWP.Capabilities.Lowest <= maxRatio ?
-			Lowest_MHz : 0,
+		Lowest_MHz,
 		SProc->PowerThermal.HWP.Capabilities.Lowest,
-		SProc->PowerThermal.HWP.Capabilities.Most_Efficient <= maxRatio?
-			Efficient_MHz : 0,
+		Efficient_MHz,
 		SProc->PowerThermal.HWP.Capabilities.Most_Efficient,
-		SProc->PowerThermal.HWP.Capabilities.Guaranteed <= maxRatio ?
-			Guaranteed_MHz : 0,
+		Guaranteed_MHz,
 		SProc->PowerThermal.HWP.Capabilities.Guaranteed,
-		SProc->PowerThermal.HWP.Capabilities.Highest <= maxRatio ?
-			Highest_MHz : 0,
+		Highest_MHz,
 		SProc->PowerThermal.HWP.Capabilities.Highest) > 0)
 	{
 		memcpy(&grid->cell.item[3], item, length);
@@ -3813,40 +3807,34 @@ REASON_CODE SysInfoPerfCaps(	Window *win,
 	CPU_STRUCT *SProc = &RO(Shm)->Cpu[cpu];
 	struct FLIP_FLOP *CFlop = &SProc->FlipFlop[!RO(Shm)->Cpu[cpu].Toggle];
 
-	double	Lowest_MHz = ABS_FREQ_MHz(double,
-				SProc->PowerThermal.HWP.Capabilities.Lowest,
-				CFlop->Clock
-		),
-		Efficient_MHz = ABS_FREQ_MHz(double,
-			SProc->PowerThermal.HWP.Capabilities.Most_Efficient,
+	float	Lowest_MHz = ABS_FREQ_MHz(float,
+			SProc->PowerThermal.HWP.Capabilities.fLowest,
 			CFlop->Clock
 		),
-		Guaranteed_MHz = ABS_FREQ_MHz(double,
-				SProc->PowerThermal.HWP.Capabilities.Guaranteed,
-				CFlop->Clock
+		Efficient_MHz = ABS_FREQ_MHz(float,
+			SProc->PowerThermal.HWP.Capabilities.fMost_Efficient,
+			CFlop->Clock
 		),
-		Highest_MHz = ABS_FREQ_MHz(double,
-				SProc->PowerThermal.HWP.Capabilities.Highest,
-				CFlop->Clock
+		Guaranteed_MHz = ABS_FREQ_MHz(float,
+			SProc->PowerThermal.HWP.Capabilities.fGuaranteed,
+			CFlop->Clock
+		),
+		Highest_MHz = ABS_FREQ_MHz(float,
+			SProc->PowerThermal.HWP.Capabilities.fHighest,
+			CFlop->Clock
 		);
-
-	const unsigned int maxRatio = 99;
 
 	GridCall(
 	    PUT(SCANKEY_NULL, HWP_Cap_Attr[bix], width, 3,
 		"CPU #%-3u  %7.2f (%3u)  %7.2f (%3u)  %7.2f (%3u)  %7.2f (%3u)",
 		cpu,
-		SProc->PowerThermal.HWP.Capabilities.Lowest <= maxRatio ?
-			Lowest_MHz : 0,
+		Lowest_MHz,
 		SProc->PowerThermal.HWP.Capabilities.Lowest,
-		SProc->PowerThermal.HWP.Capabilities.Most_Efficient <= maxRatio?
-			Efficient_MHz : 0,
+		Efficient_MHz,
 		SProc->PowerThermal.HWP.Capabilities.Most_Efficient,
-		SProc->PowerThermal.HWP.Capabilities.Guaranteed <= maxRatio ?
-			Guaranteed_MHz : 0,
+		Guaranteed_MHz,
 		SProc->PowerThermal.HWP.Capabilities.Guaranteed,
-		SProc->PowerThermal.HWP.Capabilities.Highest <= maxRatio ?
-			Highest_MHz : 0,
+		Highest_MHz,
 		SProc->PowerThermal.HWP.Capabilities.Highest),
 		Refresh_HWP_Cap_Freq, cpu);
       } else {
@@ -9209,8 +9197,8 @@ void CPU_Item_HWP_Target_Freq(unsigned int cpu, ASCII *item)
 			RO(Shm)->Cpu[cpu].Topology.PackageID,
 			RO(Shm)->Cpu[cpu].Topology.CoreID,
 			RO(Shm)->Cpu[cpu].Topology.ThreadID,
-		ABS_FREQ_MHz(double,
-			RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Desired_Perf,
+		ABS_FREQ_MHz(float,
+		      RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.fDesired_Perf,
 			CFlop->Clock
 			),
 			isEnable ? '<' : '[',
@@ -9311,8 +9299,8 @@ void CPU_Item_HWP_Max_Freq(unsigned int cpu, ASCII *item)
 			RO(Shm)->Cpu[cpu].Topology.PackageID,
 			RO(Shm)->Cpu[cpu].Topology.CoreID,
 			RO(Shm)->Cpu[cpu].Topology.ThreadID,
-		ABS_FREQ_MHz(double,
-			RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Maximum_Perf,
+		ABS_FREQ_MHz(float,
+		      RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.fMaximum_Perf,
 			CFlop->Clock
 			),
 			isEnable ? '<' : '[',
@@ -9413,8 +9401,8 @@ void CPU_Item_HWP_Min_Freq(unsigned int cpu, ASCII *item)
 			RO(Shm)->Cpu[cpu].Topology.PackageID,
 			RO(Shm)->Cpu[cpu].Topology.CoreID,
 			RO(Shm)->Cpu[cpu].Topology.ThreadID,
-		ABS_FREQ_MHz(double,
-			RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Minimum_Perf,
+		ABS_FREQ_MHz(float,
+			RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.fMinimum_Perf,
 			CFlop->Clock
 			),
 			isEnable ? '<' : '[',

@@ -378,6 +378,38 @@ static COF_ST FixMissingRatioAndFrequency(COF_ST r32, CLOCK *pClock)
 	return r64;
 }
 
+static void ReCompute_FactoryFrequency(void)
+{
+	switch (PUBLIC(RO(Proc))->Features.Info.Platform) {
+	case PFM_DGX_SPARK:
+	  {
+		unsigned int seek = 0;
+	    if (PUBLIC(RO(Proc))->Features.Hybrid) {
+		unsigned int cpu;
+	      for (cpu = 1; cpu < PUBLIC(RO(Proc))->CPU.Count; cpu++) {
+		if (COF2CPUFREQ(PUBLIC(RO(Core, AT(cpu)))->Clock,
+				PUBLIC(RO(Core, AT(cpu)))->Boost[BOOST(MAX)])
+		  > COF2CPUFREQ(PUBLIC(RO(Core, AT(seek)))->Clock,
+				PUBLIC(RO(Core, AT(seek)))->Boost[BOOST(MAX)]))
+		{
+			seek = cpu;
+		}
+	      }
+	    }
+		PUBLIC(RO(Proc))->Features.Factory.Ratio = 0;
+		PUBLIC(RO(Proc))->Features.Factory.Freq = 0;
+
+		FixMissingRatioAndFrequency(
+			PUBLIC(RO(Core, AT(seek)))->Boost[BOOST(MAX)],
+			&PUBLIC(RO(Core, AT(seek)))->Clock
+		);
+	  }
+		break;
+	case PFM_GENERIC:
+		break;
+	}
+}
+
 static unsigned long long CoreFreqK_Read_CS_From_TSC(struct clocksource *cs)
 {
 	unsigned long long TSC __attribute__ ((aligned (8)));
@@ -2597,29 +2629,6 @@ static void Compute_ACPI_CPPC_Bounds(unsigned int cpu)
 	}
 }
 
-static unsigned short CPPC_ACPI_ScaleRatio(	CORE_RO *Core,
-						unsigned int scale,
-						unsigned short hint,
-						unsigned short CPB )
-{
-	unsigned int max_1C;
-	unsigned short scaled;
-	if (CPB) {
-		max_1C	= (hint * Core->Boost[BOOST(TBO)].Q)
-			+ ((hint * (Core->Boost[BOOST(TBO)].R)) >> 16);
-	} else {
-		max_1C	= (hint * Core->Boost[BOOST(MAX)].Q)
-			+ ((hint * (Core->Boost[BOOST(MAX)].R)) >> 16);
-	}
-	if (scale > 0) {
-		scaled = DIV_ROUND_CLOSEST(max_1C, scale);
-		scaled = scaled & 0xff;
-	} else {
-		scaled = 0;
-	}
-	return scaled;
-}
-
 static signed int Disable_ACPI_CPPC(unsigned int cpu, void *arg)
 {
 #if defined(CONFIG_ACPI_CPPC_LIB) \
@@ -3487,12 +3496,79 @@ static void Core_Thermal_Worker(struct work_struct *work)
 	}
 }
 
+static void PerCore_Compute_ACPI_CPPC(CORE_RO *Core)
+{	/*	Collaborative Processor Performance Control	*/
+    if (PUBLIC(RO(Proc))->Features.ACPI_CPPC)
+    {
+	unsigned int scaledFreq;
+
+	if (PUBLIC(RO(Proc))->Features.OSPM_EPP) {
+		Get_EPP_ACPI_CPPC(Core->Bind);
+	}
+
+	Compute_ACPI_CPPC_Bounds(Core->Bind);
+
+	Core->PowerThermal.HWP_Capabilities.Highest = \
+			Core->PowerThermal.ACPI_CPPC.Highest;
+
+	Core->PowerThermal.HWP_Capabilities.Guaranteed = \
+			Core->PowerThermal.ACPI_CPPC.Guaranteed;
+
+	Core->PowerThermal.HWP_Capabilities.Most_Efficient = \
+			Core->PowerThermal.ACPI_CPPC.Efficient;
+
+	Core->PowerThermal.HWP_Capabilities.Lowest = \
+			Core->PowerThermal.ACPI_CPPC.Lowest;
+
+	Core->PowerThermal.HWP_Request.Minimum_Perf = \
+			Core->PowerThermal.ACPI_CPPC.Minimum;
+
+	scaledFreq = Core->PowerThermal.ACPI_CPPC.Minimum
+		* PUBLIC(RO(Proc))->Features.Factory.Freq;
+
+	scaledFreq = DIV_ROUND_CLOSEST(scaledFreq, 255U);
+
+	CPUFREQ2COF(	PUBLIC(RO(Proc))->Features.Factory.Clock,
+			UNIT_MHz(scaledFreq),
+			Core->Boost[BOOST(HWP_MIN)] );
+
+	Core->PowerThermal.HWP_Request.Maximum_Perf = \
+					Core->PowerThermal.ACPI_CPPC.Maximum;
+
+	Core->PowerThermal.HWP_Request.Desired_Perf = \
+					Core->PowerThermal.ACPI_CPPC.Desired;
+
+	Core->PowerThermal.HWP_Request.Energy_Pref = \
+					Core->PowerThermal.ACPI_CPPC.Energy;
+
+	scaledFreq = Core->PowerThermal.ACPI_CPPC.Maximum
+		* PUBLIC(RO(Proc))->Features.Factory.Freq;
+
+	scaledFreq = DIV_ROUND_CLOSEST(scaledFreq, 255U);
+
+	CPUFREQ2COF(	PUBLIC(RO(Proc))->Features.Factory.Clock,
+			UNIT_MHz(scaledFreq),
+			Core->Boost[BOOST(HWP_MAX)] );
+
+	scaledFreq = Core->PowerThermal.ACPI_CPPC.Desired
+		* PUBLIC(RO(Proc))->Features.Factory.Freq;
+
+	scaledFreq = DIV_ROUND_CLOSEST(scaledFreq, 255U);
+
+	CPUFREQ2COF(	PUBLIC(RO(Proc))->Features.Factory.Clock,
+			UNIT_MHz(scaledFreq),
+			Core->Boost[BOOST(HWP_TGT)] );
+    }
+}
+
 static void PerCore_GenericMachine(void *arg)
 {
 	volatile REVIDR revid;
 	CORE_RO *Core = (CORE_RO *) arg;
 
 	Query_Linux_CPUFREQ(Core->Clock, Core->Bind);
+
+	PerCore_Compute_ACPI_CPPC(Core);
 
 	__asm__ __volatile__(
 		"mrs	%[revid],	revidr_el1"	"\n\t"
@@ -3507,83 +3583,6 @@ static void PerCore_GenericMachine(void *arg)
 
 	BITSET_CC(BUS_LOCK, PUBLIC(RO(Proc))->PMU_Mask, Core->Bind);
 	BITSET_CC(BUS_LOCK, PUBLIC(RO(Proc))->SPEC_CTRL_Mask, Core->Bind);
-	/*	Collaborative Processor Performance Control	*/
-    if (PUBLIC(RO(Proc))->Features.ACPI_CPPC)
-    {
-	if (PUBLIC(RO(Proc))->Features.OSPM_EPP) {
-		Get_EPP_ACPI_CPPC(Core->Bind);
-	}
-
-	Compute_ACPI_CPPC_Bounds(Core->Bind);
-
-	Core->PowerThermal.HWP_Capabilities.Highest = \
-		CPPC_ACPI_ScaleRatio(Core,
-			PUBLIC(RO(Proc))->PowerThermal.ACPI_CPPC.Maximum,
-			Core->PowerThermal.ACPI_CPPC.Highest,
-			0
-		);
-	Core->PowerThermal.HWP_Capabilities.Guaranteed = \
-		CPPC_ACPI_ScaleRatio(Core,
-			PUBLIC(RO(Proc))->PowerThermal.ACPI_CPPC.Maximum,
-			Core->PowerThermal.ACPI_CPPC.Guaranteed,
-			0
-		);
-	#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0)
-	Core->PowerThermal.HWP_Capabilities.Most_Efficient = \
-			Core->PowerThermal.ACPI_CPPC.Efficient / 1000U;
-
-	Core->PowerThermal.HWP_Capabilities.Lowest = \
-			Core->PowerThermal.ACPI_CPPC.Lowest / 1000U;
-
-	Core->PowerThermal.HWP_Request.Minimum_Perf = \
-			Core->PowerThermal.ACPI_CPPC.Minimum / 1000U;
-
-	CPUFREQ2COF(	PUBLIC(RO(Proc))->Features.Factory.Clock,
-			UNIT_MHz(Core->PowerThermal.ACPI_CPPC.Minimum),
-			Core->Boost[BOOST(HWP_MIN)] );
-	#else
-	Core->PowerThermal.HWP_Capabilities.Most_Efficient = \
-		CPPC_ACPI_ScaleRatio(Core,
-			PUBLIC(RO(Proc))->PowerThermal.ACPI_CPPC.Maximum,
-			Core->PowerThermal.ACPI_CPPC.Efficient,
-			0
-		);
-	Core->PowerThermal.HWP_Capabilities.Lowest = \
-		CPPC_ACPI_ScaleRatio(Core,
-			PUBLIC(RO(Proc))->PowerThermal.ACPI_CPPC.Maximum,
-			Core->PowerThermal.ACPI_CPPC.Lowest,
-			0
-		);
-	Core->PowerThermal.HWP_Request.Minimum_Perf = \
-			CPPC_ACPI_ScaleRatio(Core,
-				Core->PowerThermal.ACPI_CPPC.Highest,
-				Core->PowerThermal.ACPI_CPPC.Minimum,
-				0
-			);
-	Core->Boost[BOOST(HWP_MIN)].Q = \
-			Core->PowerThermal.HWP_Request.Minimum_Perf;
-	#endif
-	Core->PowerThermal.HWP_Request.Maximum_Perf = \
-			CPPC_ACPI_ScaleRatio(Core,
-				Core->PowerThermal.ACPI_CPPC.Highest,
-				Core->PowerThermal.ACPI_CPPC.Maximum,
-				0
-			);
-	Core->PowerThermal.HWP_Request.Desired_Perf = \
-			CPPC_ACPI_ScaleRatio(Core,
-				Core->PowerThermal.ACPI_CPPC.Highest,
-				Core->PowerThermal.ACPI_CPPC.Desired,
-				0
-			);
-	Core->PowerThermal.HWP_Request.Energy_Pref = \
-					Core->PowerThermal.ACPI_CPPC.Energy;
-
-	Core->Boost[BOOST(HWP_MAX)].Q = \
-			Core->PowerThermal.HWP_Request.Maximum_Perf;
-
-	Core->Boost[BOOST(HWP_TGT)].Q = \
-			Core->PowerThermal.HWP_Request.Desired_Perf;
-    }
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 56)
@@ -7392,7 +7391,9 @@ static int CoreFreqK_Ignition_Level_Up(INIT_ARG *pArg)
 		Query_Voltage_From_OPP();
 	}
 #endif /* CONFIG_PM_OPP */
-
+	if (PUBLIC(RO(Proc))->Features.ACPI) {
+		ReCompute_FactoryFrequency();
+	}
 #ifdef CONFIG_HOTPLUG_CPU
 	#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
 	/*	Always returns zero (kernel/notifier.c)			*/
