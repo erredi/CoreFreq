@@ -373,7 +373,7 @@ static COF_ST FixMissingRatioAndFrequency(COF_ST r32, CLOCK *pClock)
 	CPUFREQ2COF(	PUBLIC(RO(Proc))->Features.Factory.Clock,
 		PUBLIC(RO(Proc))->Features.Factory.Freq * 1000000LLU, r64 );
 
-	PUBLIC(RO(Proc))->Features.Factory.Ratio = r64.Q;
+	PUBLIC(RO(Proc))->Features.Factory.Ratio = r64;
   }
 	return r64;
 }
@@ -396,7 +396,7 @@ static void ReCompute_FactoryFrequency(void)
 		}
 	      }
 	    }
-		PUBLIC(RO(Proc))->Features.Factory.Ratio = 0;
+		PUBLIC(RO(Proc))->Features.Factory.Ratio = (COF_ST){.Q=0, .R=0};
 		PUBLIC(RO(Proc))->Features.Factory.Freq = 0;
 
 		FixMissingRatioAndFrequency(

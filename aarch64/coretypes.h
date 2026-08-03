@@ -1208,8 +1208,8 @@ typedef struct	/* BSP features.					*/
 	struct {
 		unsigned long long	PPIN;
 			CLOCK		Clock;
-			unsigned int	Freq,
-					Ratio;
+			unsigned int	Freq;
+			COF_ST		Ratio;
 	} Factory;
 } FEATURES;
 

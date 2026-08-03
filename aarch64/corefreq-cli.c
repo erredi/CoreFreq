@@ -1307,12 +1307,16 @@ void RefreshFactoryClock(TGrid *grid, DATA_TYPE data[])
 
 void RefreshFactoryFreq(TGrid *grid, DATA_TYPE data[])
 {
-	char item[11+11+1];
+	char item[11+11+1], factoryRatio[11];
 	UNUSED(data);
 
-	StrFormat(item, 11+11+1, "%5u" "%7u",
+	FormatFixedFloat(7, 2,
+			COF_TO_NBR(float, RO(Shm)->Proc.Features.Factory.Ratio),
+			factoryRatio);
+
+	StrFormat(item, 11+11+1, "%5u" "%s",
 		RO(Shm)->Proc.Features.Factory.Freq,
-		RO(Shm)->Proc.Features.Factory.Ratio);
+		factoryRatio);
 
 	memcpy(&grid->cell.item[22], &item[0], 5);
 	memcpy(&grid->cell.item[49], &item[5], 7);
@@ -1532,10 +1536,14 @@ REASON_CODE SysInfoProc(Window *win,
 			item ),
 		RefreshFactoryClock );
 
+	FormatFixedFloat(7, 2,
+			COF_TO_NBR(float, RO(Shm)->Proc.Features.Factory.Ratio),
+			item);
+
 	GridCall( PUT(	SCANKEY_NULL, attrib[3], width, 0,
-			"%.*s""%5u""%.*s""[%7d ]",
+			"%.*s""%5u""%.*s""[%s ]",
 			22, hSpace, RO(Shm)->Proc.Features.Factory.Freq,
-			21, hSpace, RO(Shm)->Proc.Features.Factory.Ratio ),
+			21, hSpace, item ),
 		RefreshFactoryFreq );
 
 	PUT(SCANKEY_NULL, attrib[0], width, 2, "%s", RSC(PERFORMANCE).CODE());
@@ -8573,7 +8581,7 @@ unsigned int MultiplierIsRatio(unsigned int cpu, unsigned int multiplier)
 			break;
 		}
 	}
-	if (RO(Shm)->Proc.Features.Factory.Ratio == multiplier) {
+	if (RO(Shm)->Proc.Features.Factory.Ratio.Q == multiplier) {
 		return 1;
 	}
 	return 0;
@@ -12775,11 +12783,13 @@ int Shortcut(SCANKEY *scan)
 			highestShift,
 
 		(int)	((SProc->Boost[BOOST(MIN)].N
-			+ RO(Shm)->Proc.Features.Factory.Ratio) / 2),
+			+ COF_TO_NBR(int, RO(Shm)->Proc.Features.Factory.Ratio))
+			/ 2),
 
-		(int)	(RO(Shm)->Proc.Features.Factory.Ratio
+		(int)	(COF_TO_NBR(int, RO(Shm)->Proc.Features.Factory.Ratio)
 			+ ((MAXCLOCK_TO_RATIO(unsigned int, CFlop->Clock.Hz)
-			- RO(Shm)->Proc.Features.Factory.Ratio) >> 1)),
+			- COF_TO_NBR(int, RO(Shm)->Proc.Features.Factory.Ratio))
+			>> 1)),
 
 			BOXKEY_CFGTDP_CLOCK,
 			TitleForRatioClock,
@@ -12818,11 +12828,13 @@ int Shortcut(SCANKEY *scan)
 			highestShift,
 
 		(int)	((RO(Shm)->Uncore.Boost[BOOST(MIN)].N
-			+ RO(Shm)->Proc.Features.Factory.Ratio ) / 2),
+			+ COF_TO_NBR(int, RO(Shm)->Proc.Features.Factory.Ratio))
+			/ 2),
 
-		(int)	(RO(Shm)->Proc.Features.Factory.Ratio
+		(int)	(COF_TO_NBR(int, RO(Shm)->Proc.Features.Factory.Ratio)
 			+ ((MAXCLOCK_TO_RATIO(unsigned int, CFlop->Clock.Hz)
-			- RO(Shm)->Proc.Features.Factory.Ratio) >> 1)),
+			- COF_TO_NBR(int, RO(Shm)->Proc.Features.Factory.Ratio))
+			>> 1)),
 
 			BOXKEY_UNCORE_CLOCK,
 			TitleForUncoreClock,
@@ -12840,7 +12852,8 @@ int Shortcut(SCANKEY *scan)
       if (win == NULL) {
 	CLOCK_ARG clockMod  = {.ullong = scan->key};
 	const unsigned int NC = clockMod.NC & CLOCKMOD_RATIO_MASK,
-		highestOperating = KMAX(RO(Shm)->Proc.Features.Factory.Ratio,
+		highestOperating = KMAX(COF_TO_NBR(int,
+					RO(Shm)->Proc.Features.Factory.Ratio),
 					RO(Shm)->Uncore.Boost[BOOST(MAX)].N);
 
 	signed int lowestShift, highestShift;
@@ -12857,8 +12870,10 @@ int Shortcut(SCANKEY *scan)
 				lowestShift,
 				highestShift,
 
-			(int)	(RO(Shm)->Proc.Features.Factory.Ratio >> 1),
-			(int)	(RO(Shm)->Proc.Features.Factory.Ratio - 1),
+				COF_TO_NBR(int,
+				RO(Shm)->Proc.Features.Factory.Ratio) >> 1,
+				COF_TO_NBR(int,
+				RO(Shm)->Proc.Features.Factory.Ratio) - 1,
 
 				BOXKEY_UNCORE_CLOCK,
 				TitleForUncoreClock,
@@ -13238,11 +13253,14 @@ int Shortcut(SCANKEY *scan)
 				highestShift,
 
 			(int)	((lowestOperating
-				+ RO(Shm)->Proc.Features.Factory.Ratio) >> 1),
+				+ COF_TO_NBR(int,
+				  RO(Shm)->Proc.Features.Factory.Ratio)) >> 1),
 
-			(int)	(RO(Shm)->Proc.Features.Factory.Ratio
+			(int)	(COF_TO_NBR(int,
+				RO(Shm)->Proc.Features.Factory.Ratio)
 			    + ((MAXCLOCK_TO_RATIO(unsigned int, CFlop->Clock.Hz)
-				- RO(Shm)->Proc.Features.Factory.Ratio) >> 1)),
+				- COF_TO_NBR(int,
+				  RO(Shm)->Proc.Features.Factory.Ratio)) >> 1)),
 
 				BOXKEY_TURBO_CLOCK,
 				TitleForTurboClock,
@@ -13299,7 +13317,8 @@ int Shortcut(SCANKEY *scan)
 				(int)	((lowestOperating
 					+ highestOperating) >> 1),
 
-			(int)	(CUMIN( RO(Shm)->Proc.Features.Factory.Ratio,
+			(int)	(CUMIN( COF_TO_NBR(int,
+					RO(Shm)->Proc.Features.Factory.Ratio),
 					GetTopOfRuler().N )),
 
 					BOXKEY_RATIO_CLOCK,
@@ -13514,7 +13533,8 @@ int Shortcut(SCANKEY *scan)
 		lowestOperating = KMIN( RO(Shm)->Cpu[
 						Ruler.Top[BOOST(MAX)]
 					].Boost[BOOST(MIN)].N,
-					RO(Shm)->Proc.Features.Factory.Ratio );
+					COF_TO_NBR(int,
+					RO(Shm)->Proc.Features.Factory.Ratio));
 
 		CFlop = &RO(Shm)->Cpu[Ruler.Top[ BOOST(MAX)] ].FlipFlop[
 					!RO(Shm)->Cpu[Ruler.Top[BOOST(MAX)]
@@ -13522,7 +13542,8 @@ int Shortcut(SCANKEY *scan)
 	      } else {
 		COF = RO(Shm)->Cpu[cpu].Boost[BOOST(MAX)];
 		lowestOperating = KMIN( RO(Shm)->Cpu[cpu].Boost[BOOST(MIN)].N,
-					RO(Shm)->Proc.Features.Factory.Ratio );
+					COF_TO_NBR(int,
+					RO(Shm)->Proc.Features.Factory.Ratio));
 		CFlop = &RO(Shm)->Cpu[cpu].FlipFlop[!RO(Shm)->Cpu[cpu].Toggle];
 	      }
 		ComputeRatioShifts(COF,
@@ -13540,11 +13561,14 @@ int Shortcut(SCANKEY *scan)
 				highestShift,
 
 			(int)	((lowestOperating
-				+ RO(Shm)->Proc.Features.Factory.Ratio) >> 1),
+				+ COF_TO_NBR(int,
+				  RO(Shm)->Proc.Features.Factory.Ratio)) >> 1),
 
-			(int)	(RO(Shm)->Proc.Features.Factory.Ratio
+			(int)	(COF_TO_NBR(int,
+				RO(Shm)->Proc.Features.Factory.Ratio)
 			    + ((MAXCLOCK_TO_RATIO(unsigned int, CFlop->Clock.Hz)
-				- RO(Shm)->Proc.Features.Factory.Ratio) >> 1)),
+				- COF_TO_NBR(int,
+				  RO(Shm)->Proc.Features.Factory.Ratio)) >> 1)),
 
 				BOXKEY_RATIO_CLOCK,
 				TitleForRatioClock,
@@ -13575,15 +13599,18 @@ int Shortcut(SCANKEY *scan)
 		lowestOperating = KMIN( RO(Shm)->Cpu[
 						Ruler.Top[BOOST(MIN)]
 					].Boost[BOOST(MIN)].N,
-					RO(Shm)->Proc.Features.Factory.Ratio );
+					COF_TO_NBR(int,
+					RO(Shm)->Proc.Features.Factory.Ratio));
 	      } else {
 		COF = RO(Shm)->Cpu[cpu].Boost[BOOST(MIN)];
 		lowestOperating = KMIN( RO(Shm)->Cpu[cpu].Boost[BOOST(MIN)].N,
-					RO(Shm)->Proc.Features.Factory.Ratio );
+					COF_TO_NBR(int,
+					RO(Shm)->Proc.Features.Factory.Ratio));
 	      }
 		ComputeRatioShifts(COF,
 				0,
-				RO(Shm)->Proc.Features.Factory.Ratio,
+				COF_TO_NBR(int,
+				RO(Shm)->Proc.Features.Factory.Ratio),
 				&lowestShift,
 				&highestShift);
 
@@ -13596,9 +13623,11 @@ int Shortcut(SCANKEY *scan)
 				highestShift,
 
 			(int)	((lowestOperating
-				+ RO(Shm)->Proc.Features.Factory.Ratio) >> 1),
+				+ COF_TO_NBR(int,
+				  RO(Shm)->Proc.Features.Factory.Ratio)) >> 1),
 
-			(int)	(RO(Shm)->Proc.Features.Factory.Ratio - 1),
+				COF_TO_NBR(int,
+				RO(Shm)->Proc.Features.Factory.Ratio) - 1,
 
 				BOXKEY_RATIO_CLOCK,
 				TitleForRatioClock,
