@@ -9213,7 +9213,7 @@ void CPU_Item_HWP_Target_Freq(unsigned int cpu, ASCII *item)
 	);
 	StrFormat(item,
 		RSZ(CREATE_SELECT_FREQ_OFFLINE)+10+11+11+11+8+10+1,
-		"  %03u  %4d%6d%6d   " "%7.2f MHz %c%4.2f %c ",
+		"  %03u  %4d%6d%6d   " "%7.2f MHz %c%5.1f%c ",
 		cpu,
 		RO(Shm)->Cpu[cpu].Topology.PackageID,
 		RO(Shm)->Cpu[cpu].Topology.CoreID,
@@ -9317,7 +9317,7 @@ void CPU_Item_HWP_Max_Freq(unsigned int cpu, ASCII *item)
 	);
 	StrFormat(item,
 		RSZ(CREATE_SELECT_FREQ_OFFLINE)+10+11+11+11+8+10+1,
-		"  %03u  %4d%6d%6d   " "%7.2f MHz %c%4.2f %c ",
+		"  %03u  %4d%6d%6d   " "%7.2f MHz %c%5.1f%c ",
 		cpu,
 		RO(Shm)->Cpu[cpu].Topology.PackageID,
 		RO(Shm)->Cpu[cpu].Topology.CoreID,
@@ -9421,7 +9421,7 @@ void CPU_Item_HWP_Min_Freq(unsigned int cpu, ASCII *item)
 	);
 	StrFormat(item,
 		RSZ(CREATE_SELECT_FREQ_OFFLINE)+10+11+11+11+8+10+1,
-		"  %03u  %4d%6d%6d   " "%7.2f MHz %c%4.2f %c ",
+		"  %03u  %4d%6d%6d   " "%7.2f MHz %c%5.1f%c ",
 		cpu,
 		RO(Shm)->Cpu[cpu].Topology.PackageID,
 		RO(Shm)->Cpu[cpu].Topology.CoreID,
