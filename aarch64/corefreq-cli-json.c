@@ -1300,24 +1300,24 @@ void JsonSysInfo(RO(SHM_STRUCT) *RO(Shm))
 				{
 					json_start_object(&s);
 					json_key(&s, "Lowest");
-					json_literal(&s, "%u", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Lowest);
+					json_literal(&s, "%f", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Lowest.N);
 					json_key(&s, "Efficient");
-					json_literal(&s, "%u", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Most_Efficient);
+					json_literal(&s, "%f", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Most_Efficient.N);
 					json_key(&s, "Guaranteed");
-					json_literal(&s, "%u", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Guaranteed);
+					json_literal(&s, "%f", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Guaranteed.N);
 					json_key(&s, "Highest");
-					json_literal(&s, "%u", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Highest);
+					json_literal(&s, "%f", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Highest.N);
 					json_end_object(&s);
 				}
 				json_key(&s, "Request");
 				{
 					json_start_object(&s);
 					json_key(&s, "Minimum_Perf");
-					json_literal(&s, "%u", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Minimum_Perf);
+					json_literal(&s, "%f", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Minimum_Perf.N);
 					json_key(&s, "Maximum_Perf");
-					json_literal(&s, "%u", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Maximum_Perf);
+					json_literal(&s, "%f", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Maximum_Perf.N);
 					json_key(&s, "Desired_Perf");
-					json_literal(&s, "%u", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Desired_Perf);
+					json_literal(&s, "%f", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Desired_Perf.N);
 					json_key(&s, "Energy_Pref");
 					json_literal(&s, "%u", RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Energy_Pref);
 					json_end_object(&s);

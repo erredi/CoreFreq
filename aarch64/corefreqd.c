@@ -903,55 +903,34 @@ void PowerThermal(	RO(SHM_STRUCT) *RO(Shm), RO(PROC) *RO(Proc),
 {
 	UNUSED(RO(Proc));
 
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Highest = \
-		RO(Core, AT(cpu))->PowerThermal.HWP_Capabilities.Highest;
-
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.fHighest = \
+	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Highest.N = \
 	( COF_TO_NBR(float, RO(Core, AT(cpu))->Boost[BOOST(MAX)])
-	* RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Highest ) / 255.0;
+	* RO(Core, AT(cpu))->PowerThermal.HWP_Capabilities.Highest ) / 255.0;
 
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Guaranteed = \
-		RO(Core, AT(cpu))->PowerThermal.HWP_Capabilities.Guaranteed;
-
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.fGuaranteed = \
+	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Guaranteed.N = \
 	( COF_TO_NBR(float, RO(Core, AT(cpu))->Boost[BOOST(MAX)])
-	* RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Guaranteed ) / 255.0;
+	* RO(Core, AT(cpu))->PowerThermal.HWP_Capabilities.Guaranteed ) / 255.0;
 
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Most_Efficient = \
-		RO(Core, AT(cpu))->PowerThermal.HWP_Capabilities.Most_Efficient;
-
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.fMost_Efficient = \
+	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Most_Efficient.N = \
 	( COF_TO_NBR(float, RO(Core, AT(cpu))->Boost[BOOST(MAX)])
-	* RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Most_Efficient )
+	* RO(Core, AT(cpu))->PowerThermal.HWP_Capabilities.Most_Efficient )
 	/ 255.0;
 
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Lowest = \
-		RO(Core, AT(cpu))->PowerThermal.HWP_Capabilities.Lowest;
-
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.fLowest = \
+	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Lowest.N = \
 	( COF_TO_NBR(float, RO(Core, AT(cpu))->Boost[BOOST(MAX)])
-	* RO(Shm)->Cpu[cpu].PowerThermal.HWP.Capabilities.Lowest ) / 255.0;
+	* RO(Core, AT(cpu))->PowerThermal.HWP_Capabilities.Lowest ) / 255.0;
 
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Minimum_Perf = \
-		RO(Core, AT(cpu))->PowerThermal.HWP_Request.Minimum_Perf;
-
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.fMinimum_Perf = \
+	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Minimum_Perf.N = \
 	( COF_TO_NBR(float, RO(Core, AT(cpu))->Boost[BOOST(MAX)])
-	* RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Minimum_Perf ) / 255.0;
+	* RO(Core, AT(cpu))->PowerThermal.HWP_Request.Minimum_Perf ) / 255.0;
 
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Maximum_Perf = \
-		RO(Core, AT(cpu))->PowerThermal.HWP_Request.Maximum_Perf;
-
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.fMaximum_Perf = \
+	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Maximum_Perf.N = \
 	( COF_TO_NBR(float, RO(Core, AT(cpu))->Boost[BOOST(MAX)])
-	* RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Maximum_Perf ) / 255.0;
+	* RO(Core, AT(cpu))->PowerThermal.HWP_Request.Maximum_Perf ) / 255.0;
 
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Desired_Perf = \
-		RO(Core, AT(cpu))->PowerThermal.HWP_Request.Desired_Perf;
-
-	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.fDesired_Perf = \
+	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Desired_Perf.N = \
 	( COF_TO_NBR(float, RO(Core, AT(cpu))->Boost[BOOST(MAX)])
-	* RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Desired_Perf ) / 255.0;
+	* RO(Core, AT(cpu))->PowerThermal.HWP_Request.Desired_Perf ) / 255.0;
 
 	RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Energy_Pref = \
 		RO(Core, AT(cpu))->PowerThermal.HWP_Request.Energy_Pref;

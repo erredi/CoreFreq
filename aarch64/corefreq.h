@@ -75,23 +75,16 @@ typedef struct
 		unsigned int		PowerPolicy;
 		struct HWP_STRUCT {
 			struct {
-			unsigned int	Highest,
+			COF_ST		Highest,
 					Guaranteed,
 					Most_Efficient,
 					Lowest;
-			float		fHighest,
-					fGuaranteed,
-					fMost_Efficient,
-					fLowest;
 			} Capabilities;
 			struct {
-			unsigned int	Minimum_Perf,
+			unsigned int	Energy_Pref;
+			COF_ST		Minimum_Perf,
 					Maximum_Perf,
-					Desired_Perf,
-					Energy_Pref;
-			float		fMinimum_Perf,
-					fMaximum_Perf,
-					fDesired_Perf;
+					Desired_Perf;
 			} Request;
 		} HWP;
 	} PowerThermal;

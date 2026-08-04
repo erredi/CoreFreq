@@ -3508,33 +3508,37 @@ void Refresh_HWP_Cap_Freq(TGrid *grid, DATA_TYPE data[])
 	struct FLIP_FLOP *CFlop = &SProc->FlipFlop[!RO(Shm)->Cpu[cpu].Toggle];
 
 	float	Lowest_MHz = ABS_FREQ_MHz(float,
-			SProc->PowerThermal.HWP.Capabilities.fLowest,
+			SProc->PowerThermal.HWP.Capabilities.Lowest.N,
 			CFlop->Clock
 		),
 		Efficient_MHz = ABS_FREQ_MHz(float,
-			SProc->PowerThermal.HWP.Capabilities.fMost_Efficient,
+			SProc->PowerThermal.HWP.Capabilities.Most_Efficient.N,
 			CFlop->Clock
 		),
 		Guaranteed_MHz = ABS_FREQ_MHz(float,
-			SProc->PowerThermal.HWP.Capabilities.fGuaranteed,
+			SProc->PowerThermal.HWP.Capabilities.Guaranteed.N,
 			CFlop->Clock
 		),
 		Highest_MHz = ABS_FREQ_MHz(float,
-			SProc->PowerThermal.HWP.Capabilities.fHighest,
+			SProc->PowerThermal.HWP.Capabilities.Highest.N,
 			CFlop->Clock
 		);
 
 	if (StrLenFormat(length, item, grid->cell.length + 1,
-		"CPU #%-3u  %7.2f (%3u)  %7.2f (%3u)  %7.2f (%3u)  %7.2f (%3u)",
+		"CPU #%-3u"		\
+		"  %7.2f (%3.1f)"	\
+		"  %7.2f (%3.1f)"	\
+		"  %7.2f (%3.1f)"	\
+		"  %7.2f (%3.1f)",
 		cpu,
 		Lowest_MHz,
-		SProc->PowerThermal.HWP.Capabilities.Lowest,
+		SProc->PowerThermal.HWP.Capabilities.Lowest.N,
 		Efficient_MHz,
-		SProc->PowerThermal.HWP.Capabilities.Most_Efficient,
+		SProc->PowerThermal.HWP.Capabilities.Most_Efficient.N,
 		Guaranteed_MHz,
-		SProc->PowerThermal.HWP.Capabilities.Guaranteed,
+		SProc->PowerThermal.HWP.Capabilities.Guaranteed.N,
 		Highest_MHz,
-		SProc->PowerThermal.HWP.Capabilities.Highest) > 0)
+		SProc->PowerThermal.HWP.Capabilities.Highest.N) > 0)
 	{
 		memcpy(&grid->cell.item[3], item, length);
 	}
@@ -3816,34 +3820,38 @@ REASON_CODE SysInfoPerfCaps(	Window *win,
 	struct FLIP_FLOP *CFlop = &SProc->FlipFlop[!RO(Shm)->Cpu[cpu].Toggle];
 
 	float	Lowest_MHz = ABS_FREQ_MHz(float,
-			SProc->PowerThermal.HWP.Capabilities.fLowest,
+			SProc->PowerThermal.HWP.Capabilities.Lowest.N,
 			CFlop->Clock
 		),
 		Efficient_MHz = ABS_FREQ_MHz(float,
-			SProc->PowerThermal.HWP.Capabilities.fMost_Efficient,
+			SProc->PowerThermal.HWP.Capabilities.Most_Efficient.N,
 			CFlop->Clock
 		),
 		Guaranteed_MHz = ABS_FREQ_MHz(float,
-			SProc->PowerThermal.HWP.Capabilities.fGuaranteed,
+			SProc->PowerThermal.HWP.Capabilities.Guaranteed.N,
 			CFlop->Clock
 		),
 		Highest_MHz = ABS_FREQ_MHz(float,
-			SProc->PowerThermal.HWP.Capabilities.fHighest,
+			SProc->PowerThermal.HWP.Capabilities.Highest.N,
 			CFlop->Clock
 		);
 
 	GridCall(
 	    PUT(SCANKEY_NULL, HWP_Cap_Attr[bix], width, 3,
-		"CPU #%-3u  %7.2f (%3u)  %7.2f (%3u)  %7.2f (%3u)  %7.2f (%3u)",
+		"CPU #%-3u"		\
+		"  %7.2f (%3.1f)"	\
+		"  %7.2f (%3.1f)"	\
+		"  %7.2f (%3.1f)"	\
+		"  %7.2f (%3.1f)",
 		cpu,
 		Lowest_MHz,
-		SProc->PowerThermal.HWP.Capabilities.Lowest,
+		SProc->PowerThermal.HWP.Capabilities.Lowest.N,
 		Efficient_MHz,
-		SProc->PowerThermal.HWP.Capabilities.Most_Efficient,
+		SProc->PowerThermal.HWP.Capabilities.Most_Efficient.N,
 		Guaranteed_MHz,
-		SProc->PowerThermal.HWP.Capabilities.Guaranteed,
+		SProc->PowerThermal.HWP.Capabilities.Guaranteed.N,
 		Highest_MHz,
-		SProc->PowerThermal.HWP.Capabilities.Highest),
+		SProc->PowerThermal.HWP.Capabilities.Highest.N),
 		Refresh_HWP_Cap_Freq, cpu);
       } else {
 	GridCall(
@@ -9192,26 +9200,28 @@ void CPU_Item_HWP_Target_Freq(unsigned int cpu, ASCII *item)
 	const unsigned int isEnable = (RO(Shm)->Proc.Features.HWP_Enable == 1)
 				|| (RO(Shm)->Proc.Features.ACPI_CPPC == 1);
 
-    if (RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Desired_Perf == 0) {
-	const COF_ST COF = {
-		.N = RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Desired_Perf
-	};
-	CPU_Item_Auto_Freq(cpu, COF, isEnable, item);
-    } else {
-	StrFormat(item,
-			RSZ(CREATE_SELECT_FREQ_OFFLINE)+10+11+11+11+8+10+1,
-			"  %03u  %4d%6d%6d   " "%7.2f MHz %c%4u %c ",
-			cpu,
-			RO(Shm)->Cpu[cpu].Topology.PackageID,
-			RO(Shm)->Cpu[cpu].Topology.CoreID,
-			RO(Shm)->Cpu[cpu].Topology.ThreadID,
-		ABS_FREQ_MHz(float,
-		      RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.fDesired_Perf,
-			CFlop->Clock
-			),
-			isEnable ? '<' : '[',
+    if (RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Desired_Perf.N == 0.0) {
+	CPU_Item_Auto_Freq(cpu,
 			RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Desired_Perf,
-			isEnable ? '>' : ']');
+			isEnable,
+			item
+	);
+    } else {
+	float Desired_Perf_MHz = ABS_FREQ_MHz(float,
+		RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Desired_Perf.N,
+		CFlop->Clock
+	);
+	StrFormat(item,
+		RSZ(CREATE_SELECT_FREQ_OFFLINE)+10+11+11+11+8+10+1,
+		"  %03u  %4d%6d%6d   " "%7.2f MHz %c%4.2f %c ",
+		cpu,
+		RO(Shm)->Cpu[cpu].Topology.PackageID,
+		RO(Shm)->Cpu[cpu].Topology.CoreID,
+		RO(Shm)->Cpu[cpu].Topology.ThreadID,
+		Desired_Perf_MHz,
+		isEnable ? '<' : '[',
+		RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Desired_Perf.N,
+		isEnable ? '>' : ']');
     }
 }
 
@@ -9294,27 +9304,29 @@ void CPU_Item_HWP_Max_Freq(unsigned int cpu, ASCII *item)
 	const unsigned int isEnable = (RO(Shm)->Proc.Features.HWP_Enable == 1)
 				|| (RO(Shm)->Proc.Features.ACPI_CPPC == 1);
 
-    if (RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Maximum_Perf == 0) {
-	const COF_ST COF = {
-		.N = RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Maximum_Perf
-	};
-	CPU_Item_Auto_Freq(cpu, COF, isEnable, item);
-    } else {
-	StrFormat(item,
-			RSZ(CREATE_SELECT_FREQ_OFFLINE)+10+11+11+11+8+10+1,
-			"  %03u  %4d%6d%6d   " "%7.2f MHz %c%4u %c ",
-			cpu,
-			RO(Shm)->Cpu[cpu].Topology.PackageID,
-			RO(Shm)->Cpu[cpu].Topology.CoreID,
-			RO(Shm)->Cpu[cpu].Topology.ThreadID,
-		ABS_FREQ_MHz(float,
-		      RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.fMaximum_Perf,
-			CFlop->Clock
-			),
-			isEnable ? '<' : '[',
+    if (RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Maximum_Perf.N == 0.0) {
+	CPU_Item_Auto_Freq(cpu,
 			RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Maximum_Perf,
-			isEnable ? '>' : ']');
-    }
+			isEnable,
+			item
+	);
+    } else {
+	float Maximum_Perf_MHz = ABS_FREQ_MHz(float,
+		RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Maximum_Perf.N,
+		CFlop->Clock
+	);
+	StrFormat(item,
+		RSZ(CREATE_SELECT_FREQ_OFFLINE)+10+11+11+11+8+10+1,
+		"  %03u  %4d%6d%6d   " "%7.2f MHz %c%4.2f %c ",
+		cpu,
+		RO(Shm)->Cpu[cpu].Topology.PackageID,
+		RO(Shm)->Cpu[cpu].Topology.CoreID,
+		RO(Shm)->Cpu[cpu].Topology.ThreadID,
+		Maximum_Perf_MHz,
+		isEnable ? '<' : '[',
+		RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Maximum_Perf.N,
+		isEnable ? '>' : ']');
+}
 }
 
 void CPU_HWP_Max_Freq_Update(TGrid *grid, DATA_TYPE data[])
@@ -9396,26 +9408,28 @@ void CPU_Item_HWP_Min_Freq(unsigned int cpu, ASCII *item)
 	const unsigned int isEnable = (RO(Shm)->Proc.Features.HWP_Enable == 1)
 				|| (RO(Shm)->Proc.Features.ACPI_CPPC == 1);
 
-    if (RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Minimum_Perf == 0) {
-	const COF_ST COF = {
-		.N = RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Minimum_Perf
-	};
-	CPU_Item_Auto_Freq(cpu, COF, isEnable, item);
-    } else {
-	StrFormat(item,
-			RSZ(CREATE_SELECT_FREQ_OFFLINE)+10+11+11+11+8+10+1,
-			"  %03u  %4d%6d%6d   " "%7.2f MHz %c%4u %c ",
-			cpu,
-			RO(Shm)->Cpu[cpu].Topology.PackageID,
-			RO(Shm)->Cpu[cpu].Topology.CoreID,
-			RO(Shm)->Cpu[cpu].Topology.ThreadID,
-		ABS_FREQ_MHz(float,
-			RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.fMinimum_Perf,
-			CFlop->Clock
-			),
-			isEnable ? '<' : '[',
+    if (RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Minimum_Perf.N == 0.0) {
+	CPU_Item_Auto_Freq(cpu,
 			RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Minimum_Perf,
-			isEnable ? '>' : ']');
+			isEnable,
+			item
+	);
+    } else {
+	float Minimum_Perf_MHz = ABS_FREQ_MHz(float,
+		RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Minimum_Perf.N,
+		CFlop->Clock
+	);
+	StrFormat(item,
+		RSZ(CREATE_SELECT_FREQ_OFFLINE)+10+11+11+11+8+10+1,
+		"  %03u  %4d%6d%6d   " "%7.2f MHz %c%4.2f %c ",
+		cpu,
+		RO(Shm)->Cpu[cpu].Topology.PackageID,
+		RO(Shm)->Cpu[cpu].Topology.CoreID,
+		RO(Shm)->Cpu[cpu].Topology.ThreadID,
+		Minimum_Perf_MHz,
+		isEnable ? '<' : '[',
+		RO(Shm)->Cpu[cpu].PowerThermal.HWP.Request.Minimum_Perf.N,
+		isEnable ? '>' : ']');
     }
 }
 
@@ -13344,6 +13358,7 @@ int Shortcut(SCANKEY *scan)
 		const unsigned int NC = clockMod.NC & CLOCKMOD_RATIO_MASK;
 		COF_ST COF;
 		signed int lowestShift, highestShift;
+		signed int medianColdZone, startingHotZone;
 
 		const signed short cpu = (signed short) (
 			(scan->key & RATIO_MASK) ^ CORE_COUNT
@@ -13352,16 +13367,22 @@ int Shortcut(SCANKEY *scan)
 		pHWP = &RO(Shm)->Cpu[
 				Ruler.Top[BOOST(HWP_TGT)]
 			].PowerThermal.HWP;
-		COF.N = (float)pHWP->Request.Desired_Perf;
+		COF = pHWP->Request.Desired_Perf;
 
 		CFlop = &RO(Shm)->Cpu[Ruler.Top[ BOOST(MAX)] ].FlipFlop[
 					!RO(Shm)->Cpu[Ruler.Top[BOOST(MAX)]
 					].Toggle];
 	      } else {
 		pHWP = &RO(Shm)->Cpu[cpu].PowerThermal.HWP;
-		COF.N = (float)pHWP->Request.Desired_Perf;
+		COF = pHWP->Request.Desired_Perf;
 		CFlop = &RO(Shm)->Cpu[cpu].FlipFlop[!RO(Shm)->Cpu[cpu].Toggle];
 	      }
+		medianColdZone = (signed int)  (
+				( pHWP->Capabilities.Lowest.N
+				+ pHWP->Capabilities.Guaranteed.N ) / 2.0
+		);
+		startingHotZone = (signed int) pHWP->Capabilities.Highest.N;
+
 		ComputeRatioShifts(COF,
 				0,
 				MAXCLOCK_TO_RATIO(unsigned int,CFlop->Clock.Hz),
@@ -13375,12 +13396,8 @@ int Shortcut(SCANKEY *scan)
 					NC,
 					lowestShift,
 					highestShift,
-
-				(int)	((pHWP->Capabilities.Lowest
-					+ pHWP->Capabilities.Guaranteed) >> 1),
-
-				(int)	pHWP->Capabilities.Highest,
-
+					medianColdZone,
+					startingHotZone,
 					BOXKEY_RATIO_CLOCK,
 					TitleForRatioClock,
 					38),
@@ -13404,6 +13421,7 @@ int Shortcut(SCANKEY *scan)
 		const unsigned int NC = clockMod.NC & CLOCKMOD_RATIO_MASK;
 		COF_ST COF;
 		signed int lowestShift, highestShift;
+		signed int medianColdZone, startingHotZone;
 
 		const signed short cpu = (signed short) (
 			(scan->key & RATIO_MASK) ^ CORE_COUNT
@@ -13412,16 +13430,22 @@ int Shortcut(SCANKEY *scan)
 		pHWP = &RO(Shm)->Cpu[
 				Ruler.Top[BOOST(HWP_MAX)]
 			].PowerThermal.HWP;
-		COF.N = (float)pHWP->Request.Maximum_Perf;
+		COF = pHWP->Request.Maximum_Perf;
 
 		CFlop = &RO(Shm)->Cpu[Ruler.Top[ BOOST(MAX)] ].FlipFlop[
 					!RO(Shm)->Cpu[Ruler.Top[BOOST(MAX)]
 					].Toggle];
 	      } else {
 		pHWP = &RO(Shm)->Cpu[cpu].PowerThermal.HWP;
-		COF.N = (float)pHWP->Request.Maximum_Perf;
+		COF = pHWP->Request.Maximum_Perf;
 		CFlop = &RO(Shm)->Cpu[cpu].FlipFlop[!RO(Shm)->Cpu[cpu].Toggle];
 	      }
+		medianColdZone = (signed int) (
+				( pHWP->Capabilities.Lowest.N
+				+ pHWP->Capabilities.Guaranteed.N ) / 2.0
+		);
+		startingHotZone = (signed int) pHWP->Capabilities.Highest.N;
+
 		ComputeRatioShifts(COF,
 				0,
 				MAXCLOCK_TO_RATIO(unsigned int,CFlop->Clock.Hz),
@@ -13435,12 +13459,8 @@ int Shortcut(SCANKEY *scan)
 					NC,
 					lowestShift,
 					highestShift,
-
-				(int)	((pHWP->Capabilities.Lowest
-					+ pHWP->Capabilities.Guaranteed) >> 1),
-
-				(int)	pHWP->Capabilities.Highest,
-
+					medianColdZone,
+					startingHotZone,
 					BOXKEY_RATIO_CLOCK,
 					TitleForRatioClock,
 					39),
@@ -13464,6 +13484,7 @@ int Shortcut(SCANKEY *scan)
 		const unsigned int NC = clockMod.NC & CLOCKMOD_RATIO_MASK;
 		COF_ST COF;
 		signed int lowestShift, highestShift;
+		signed int medianColdZone, startingHotZone;
 
 		const signed short cpu = (signed short) (
 			(scan->key & RATIO_MASK) ^ CORE_COUNT
@@ -13472,16 +13493,22 @@ int Shortcut(SCANKEY *scan)
 		pHWP = &RO(Shm)->Cpu[
 				Ruler.Top[BOOST(HWP_MIN)]
 			].PowerThermal.HWP;
-		COF.N = (float)pHWP->Request.Minimum_Perf;
+		COF = pHWP->Request.Minimum_Perf;
 
 		CFlop = &RO(Shm)->Cpu[Ruler.Top[ BOOST(MAX)] ].FlipFlop[
 					!RO(Shm)->Cpu[Ruler.Top[BOOST(MAX)]
 					].Toggle];
 	      } else {
 		pHWP = &RO(Shm)->Cpu[cpu].PowerThermal.HWP;
-		COF.N = (float)pHWP->Request.Minimum_Perf;
+		COF = pHWP->Request.Minimum_Perf;
 		CFlop = &RO(Shm)->Cpu[cpu].FlipFlop[!RO(Shm)->Cpu[cpu].Toggle];
 	      }
+		medianColdZone = (signed int) (
+				( pHWP->Capabilities.Lowest.N
+				+ pHWP->Capabilities.Guaranteed.N ) / 2.0
+		);
+		startingHotZone = (signed int) pHWP->Capabilities.Highest.N;
+
 		ComputeRatioShifts(COF,
 				0,
 				MAXCLOCK_TO_RATIO(unsigned int,CFlop->Clock.Hz),
@@ -13495,12 +13522,8 @@ int Shortcut(SCANKEY *scan)
 					NC,
 					lowestShift,
 					highestShift,
-
-				(int)	((pHWP->Capabilities.Lowest
-					+ pHWP->Capabilities.Guaranteed) >> 1),
-
-				(int)	pHWP->Capabilities.Highest,
-
+					medianColdZone,
+					startingHotZone,
 					BOXKEY_RATIO_CLOCK,
 					TitleForRatioClock,
 					40),
