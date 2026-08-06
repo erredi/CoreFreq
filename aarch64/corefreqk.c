@@ -2461,6 +2461,9 @@ static COF_ST Factory2COF(CORE_RO *Core) {
 static void Query_Linux_CPUFREQ(CLOCK clock, unsigned int cpu)
 {
 	CORE_RO *Core = (CORE_RO *) PUBLIC(RO(Core, AT(cpu)));
+	bool	per_tblflag_cpufreq_boost = false,
+		per_cpufreq_boost_enabled = false,
+		per_policy_has_boost_freq = false;
 #ifdef CONFIG_CPU_FREQ
 	struct cpufreq_policy *pFreqPolicy = \
 		&PRIVATE(OF(Core, AT(cpu)))->FreqPolicy;
@@ -2470,6 +2473,13 @@ static void Query_Linux_CPUFREQ(CLOCK clock, unsigned int cpu)
 #ifdef CONFIG_CPU_FREQ
   if (cpufreq_get_policy(pFreqPolicy, cpu) == 0)
   {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
+	per_cpufreq_boost_enabled = cpufreq_boost_enabled();
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0) \
+ && LINUX_VERSION_CODE <= KERNEL_VERSION(6, 14, 0)
+	per_policy_has_boost_freq = policy_has_boost_freq(pFreqPolicy);
+#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0)
 	struct cpufreq_frequency_table *table;
 	enum RATIO_BOOST boost = BOOST(MIN);
@@ -2491,14 +2501,20 @@ static void Query_Linux_CPUFREQ(CLOCK clock, unsigned int cpu)
 			boost++;
 		}
 	}
-     if ((table->flags & CPUFREQ_BOOST_FREQ) == CPUFREQ_BOOST_FREQ) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
+	per_tblflag_cpufreq_boost = \
+		(table->flags & CPUFREQ_BOOST_FREQ) == CPUFREQ_BOOST_FREQ;
+#endif
+     if (per_cpufreq_boost_enabled
+      || per_policy_has_boost_freq
+      || per_tblflag_cpufreq_boost)
+     {
 	if (COF2CPUFREQ(clock, COF) \
 		> COF2CPUFREQ(clock, Core->Boost[BOOST(TBH)]))
 	{
 		Core->Boost[BOOST(TBO)] = Core->Boost[BOOST(TBH)];
 		Core->Boost[BOOST(TBH)] = COF;
 	}
-	PUBLIC(RO(Proc))->Features.Turbo_OPP = 1;
      }
     }
    }
@@ -2509,6 +2525,8 @@ static void Query_Linux_CPUFREQ(CLOCK clock, unsigned int cpu)
 		boost * sizeof(enum RATIO_BOOST));
 
 	memset(&Core->Boost[BOOST(18C)], 0, diff * sizeof(enum RATIO_BOOST));
+
+	PUBLIC(RO(Proc))->Features.Turbo_OPP = 1;
    }
 #endif
   }
@@ -2533,6 +2551,15 @@ static void Query_Linux_CPUFREQ(CLOCK clock, unsigned int cpu)
 	COF = Factory2COF(Core);
     }
 	Core->Boost[BOOST(TGT)] = COF;
+
+    if (per_cpufreq_boost_enabled
+     || per_policy_has_boost_freq
+     || per_tblflag_cpufreq_boost)
+    {
+	BITSET_CC(BUS_LOCK, PUBLIC(RW(Proc))->TurboBoost, Core->Bind);
+    } else {
+	BITCLR_CC(BUS_LOCK, PUBLIC(RW(Proc))->TurboBoost, Core->Bind);
+    }
 }
 
 #ifdef CONFIG_PM_OPP
@@ -3334,6 +3361,7 @@ static void PerCore_Reset(CORE_RO *Core)
 	BITCLR_CC(BUS_LOCK, PUBLIC(RO(Proc))->PMU_Mask	, Core->Bind);
 	BITCLR_CC(BUS_LOCK, PUBLIC(RO(Proc))->HWP_Mask	, Core->Bind);
 	BITCLR_CC(BUS_LOCK, PUBLIC(RO(Proc))->CR_Mask	, Core->Bind);
+	BITCLR_CC(BUS_LOCK, PUBLIC(RO(Proc))->TurboBoost_Mask,Core->Bind);
 	BITCLR_CC(BUS_LOCK, PUBLIC(RO(Proc))->SPEC_CTRL_Mask, Core->Bind);
 
 	BITCLR_CC(BUS_LOCK, PUBLIC(RW(Proc))->HWP	, Core->Bind);
@@ -3343,6 +3371,7 @@ static void PerCore_Reset(CORE_RO *Core)
 	BITCLR_CC(BUS_LOCK, PUBLIC(RW(Proc))->CSV3	, Core->Bind);
 	BITCLR_CC(BUS_LOCK, PUBLIC(RW(Proc))->SSBS	, Core->Bind);
 	BITCLR_CC(BUS_LOCK, PUBLIC(RW(Proc))->VM	, Core->Bind);
+	BITCLR_CC(BUS_LOCK, PUBLIC(RW(Proc))->TurboBoost, Core->Bind);
 
 	BITWISECLR(LOCKLESS, Core->ThermalPoint.Mask);
 	BITWISECLR(LOCKLESS, Core->ThermalPoint.Kind);
@@ -3582,6 +3611,7 @@ static void PerCore_GenericMachine(void *arg)
 	SystemRegisters(Core);
 
 	BITSET_CC(BUS_LOCK, PUBLIC(RO(Proc))->PMU_Mask, Core->Bind);
+	BITSET_CC(BUS_LOCK, PUBLIC(RO(Proc))->TurboBoost_Mask,Core->Bind);
 	BITSET_CC(BUS_LOCK, PUBLIC(RO(Proc))->SPEC_CTRL_Mask, Core->Bind);
 }
 

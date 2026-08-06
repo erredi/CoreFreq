@@ -294,6 +294,7 @@ typedef struct
 	BitCC			CR_Mask 	__attribute__ ((aligned (16)));
 	BitCC			HWP_Mask	__attribute__ ((aligned (16)));
 	BitCC			PMU_Mask	__attribute__ ((aligned (16)));
+	BitCC			TurboBoost_Mask __attribute__ ((aligned (16)));
 	BitCC			SPEC_CTRL_Mask	__attribute__ ((aligned (16)));
 
 	enum THERMAL_FORMULAS	thermalFormula;
@@ -393,6 +394,7 @@ typedef struct
 	BitCC			CSV2_3		__attribute__ ((aligned (16)));
 	BitCC			CSV3		__attribute__ ((aligned (16)));
 	BitCC			SSBS		__attribute__ ((aligned (16)));
+	BitCC			TurboBoost	__attribute__ ((aligned (16)));
 	struct {
 		Bit64		Signal	__attribute__ ((aligned (8)));
 	} OS;

@@ -737,6 +737,10 @@ void Technology_Update( RO(SHM_STRUCT) *RO(Shm),
 						RW(Proc)->VM,
 						RO(Proc)->CR_Mask) != 0;
 
+	RO(Shm)->Proc.Technology.Turbo = BITWISEAND_CC(BUS_LOCK,
+						RW(Proc)->TurboBoost,
+						RO(Proc)->TurboBoost_Mask) != 0;
+
 	if (RO(Proc)->Uncore.ICN.DSU_Type != DSU_NONE) {
 		RO(Shm)->Proc.Technology.DSU = 1;
 	}

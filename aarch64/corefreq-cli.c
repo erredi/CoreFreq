@@ -1626,7 +1626,7 @@ REASON_CODE SysInfoProc(Window *win,
 		RefreshTopFreq, BOOST(HWP_TGT) );
     }
 /* Section Mark */
-    if (RO(Shm)->Proc.Features.Turbo_OPP == 1)
+    if (RO(Shm)->Proc.Technology.Turbo == 1)
     {
 	PUT(	SCANKEY_NULL, attrib[RO(Shm)->Proc.Features.Turbo_Unlock],
 		width, 2, "%s%.*s[%7.*s]", RSC(TURBO).CODE(),
@@ -1665,8 +1665,9 @@ REASON_CODE SysInfoProc(Window *win,
 		RefreshTopFreq, BOOST(TBO) );
     }
 /* Section Mark */
+    if (RO(Shm)->Proc.Features.Turbo_OPP == 1) {
 	PUT(SCANKEY_NULL, attrib[0], width, 2, "%s", RSC(OPP).CODE());
-
+    }
     for(boost = BOOST(1C), activeCores = 1;
       boost > BOOST(1C)-(enum RATIO_BOOST)RO(Shm)->Proc.Features.SpecTurboRatio;
 		boost--, activeCores++)
