@@ -50,7 +50,7 @@ typedef struct
 	HWP_INTERRUPT			HWP_Interrupt;
 	HWP_REQUEST			HWP_Request;
 	struct ACPI_CPPC_STRUCT {
-		unsigned short		Highest,
+		unsigned int		Highest,
 					Guaranteed,
 					Efficient,
 					Lowest,

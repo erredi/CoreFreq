@@ -2714,9 +2714,6 @@ static signed int Get_ACPI_CPPC_Registers(unsigned int cpu, void *arg)
 			Core->Bind, rc);
 	}
 	if (rc == 0) {
-	    #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
-		unsigned long long desired_perf = 0;
-	    #endif
 		Core->PowerThermal.ACPI_CPPC = (struct ACPI_CPPC_STRUCT) {
 			.Highest	= CPPC_Caps.highest_perf,
 			#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
@@ -2730,39 +2727,16 @@ static signed int Get_ACPI_CPPC_Registers(unsigned int cpu, void *arg)
 			.Efficient	= CPPC_Caps.nominal_freq,
 			.Lowest 	= CPPC_Caps.lowest_freq,
 			.Minimum	= CPPC_Caps.lowest_freq,
+			.Desired	= CPPC_Perf.reference_perf,
 			#else
 			.Efficient	= CPPC_Caps.nominal_perf,
 			.Lowest 	= CPPC_Caps.lowest_perf,
 			.Minimum	= CPPC_Caps.lowest_perf,
+			.Desired	= CPPC_Caps.reference_perf,
 			#endif
 			.Maximum	= CPPC_Caps.highest_perf,
-			#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0) \
-			 && LINUX_VERSION_CODE < KERNEL_VERSION(7, 1, 0)
-			.Desired	= CPPC_Perf.reference_perf,
-			#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0) \
-			    && LINUX_VERSION_CODE < KERNEL_VERSION(7, 1, 0)) \
-			    || LINUX_VERSION_CODE >= KERNEL_VERSION(7, 1, 0)
-			.Desired	= CPPC_Caps.reference_perf,
-			#else
-			.Desired	= 0,
-			#endif
 			.Energy 	= 0
 		};
-	    #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
-		#if (defined(CONFIG_SCHED_BORE) || defined(CONFIG_CACHY)) \
-		 && (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
-		rc = cppc_get_desired_perf(Core->Bind, &desired_perf);
-		rc = rc == -EINVAL ? 0 : rc;
-		#else
-		rc = cppc_get_desired_perf(Core->Bind, &desired_perf);
-		#endif
-	    if (rc == 0) {
-		Core->PowerThermal.ACPI_CPPC.Desired = desired_perf;
-	    } else {
-		 pr_debug("CoreFreq: cppc_get_desired_perf(cpu=%u) error %d\n",
-			Core->Bind, rc);
-	    }
-	    #endif
 	}
 	return rc;
 #else
@@ -3529,7 +3503,7 @@ static void PerCore_Compute_ACPI_CPPC(CORE_RO *Core)
 {	/*	Collaborative Processor Performance Control	*/
     if (PUBLIC(RO(Proc))->Features.ACPI_CPPC)
     {
-	unsigned int scaledFreq;
+	unsigned long long scaledFreq;
 
 	if (PUBLIC(RO(Proc))->Features.OSPM_EPP) {
 		Get_EPP_ACPI_CPPC(Core->Bind);
@@ -3552,38 +3526,44 @@ static void PerCore_Compute_ACPI_CPPC(CORE_RO *Core)
 	Core->PowerThermal.HWP_Request.Minimum_Perf = \
 			Core->PowerThermal.ACPI_CPPC.Minimum;
 
-	scaledFreq = Core->PowerThermal.ACPI_CPPC.Minimum
-		* PUBLIC(RO(Proc))->Features.Factory.Freq;
-
-	scaledFreq = DIV_ROUND_CLOSEST(scaledFreq, 255U);
-
-	CPUFREQ2COF(	PUBLIC(RO(Proc))->Features.Factory.Clock,
-			UNIT_MHz(scaledFreq),
-			Core->Boost[BOOST(HWP_MIN)] );
-
 	Core->PowerThermal.HWP_Request.Maximum_Perf = \
-					Core->PowerThermal.ACPI_CPPC.Maximum;
+			Core->PowerThermal.ACPI_CPPC.Maximum;
 
 	Core->PowerThermal.HWP_Request.Desired_Perf = \
-					Core->PowerThermal.ACPI_CPPC.Desired;
+			Core->PowerThermal.ACPI_CPPC.Desired;
 
 	Core->PowerThermal.HWP_Request.Energy_Pref = \
-					Core->PowerThermal.ACPI_CPPC.Energy;
+			Core->PowerThermal.ACPI_CPPC.Energy;
+
+	scaledFreq = Core->PowerThermal.ACPI_CPPC.Minimum
+		   * Core->PowerThermal.ACPI_CPPC.Efficient;
+
+	scaledFreq = DIV_ROUND_CLOSEST(
+			scaledFreq,
+			Core->PowerThermal.ACPI_CPPC.Desired
+	);
+	CPUFREQ2COF(	PUBLIC(RO(Proc))->Features.Factory.Clock,
+			(10000 * scaledFreq),
+			Core->Boost[BOOST(HWP_MIN)] );
 
 	scaledFreq = Core->PowerThermal.ACPI_CPPC.Maximum
-		* PUBLIC(RO(Proc))->Features.Factory.Freq;
+		   * Core->PowerThermal.ACPI_CPPC.Efficient;
 
-	scaledFreq = DIV_ROUND_CLOSEST(scaledFreq, 255U);
-
+	scaledFreq = DIV_ROUND_CLOSEST(
+			scaledFreq,
+			Core->PowerThermal.ACPI_CPPC.Guaranteed
+	);
 	CPUFREQ2COF(	PUBLIC(RO(Proc))->Features.Factory.Clock,
 			UNIT_MHz(scaledFreq),
 			Core->Boost[BOOST(HWP_MAX)] );
 
 	scaledFreq = Core->PowerThermal.ACPI_CPPC.Desired
-		* PUBLIC(RO(Proc))->Features.Factory.Freq;
+		   * PUBLIC(RO(Proc))->Features.Factory.Freq;
 
-	scaledFreq = DIV_ROUND_CLOSEST(scaledFreq, 255U);
-
+	scaledFreq = DIV_ROUND_CLOSEST(
+			scaledFreq,
+			Core->PowerThermal.ACPI_CPPC.Desired
+	);
 	CPUFREQ2COF(	PUBLIC(RO(Proc))->Features.Factory.Clock,
 			UNIT_MHz(scaledFreq),
 			Core->Boost[BOOST(HWP_TGT)] );

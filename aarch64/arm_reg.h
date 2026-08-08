@@ -917,18 +917,13 @@ typedef union
 	};
 } AMCNTENSET;
 
-typedef union
+typedef struct
 {
-	unsigned long long	value;
-	struct
-	{
-		unsigned long long
-		Highest 	:  8-0,
-		Guaranteed	: 16-8,
-		Most_Efficient	: 24-16,
-		Lowest		: 32-24,
-		ReservedBits	: 64-32; /* **Must be zero**		*/
-	};
+	unsigned int
+		Highest,		/* highest_perf 		*/
+		Guaranteed,		/* guaranteed_perf|nominal_perf */
+		Most_Efficient, 	/* nominal_freq 		*/
+		Lowest; 		/* lowest_freq			*/
 } HWP_CAPABILITIES;
 
 typedef union
@@ -945,19 +940,23 @@ typedef union
 	};
 } HWP_INTERRUPT;
 
-typedef union
+typedef struct
 {
-	unsigned long long	value;
+	struct
+	{
+		unsigned int
+		Minimum_Perf,
+		Maximum_Perf,
+		Desired_Perf,		/* reference_perf		*/
+		Energy_Pref;
+	};
 	struct
 	{
 		unsigned long long
-		Minimum_Perf	:  8-0,
-		Maximum_Perf	: 16-8,
-		Desired_Perf	: 24-16,
-		Energy_Pref	: 32-24,
+		ReservedBits1	: 32-0,
 		Activity_Window : 42-32,
 		Package_Control : 43-42,
-		ReservedBits	: 59-43,
+		ReservedBits2	: 59-43,
 		Act_Window_Valid: 60-59, /* Activity_Window Valid; Default=0 */
 		EPP_Valid	: 61-60, /*1:[HWP_REQUEST];0:[HWP_REQUEST_PKG]*/
 		Desired_Valid	: 62-61, /* -> Desired_Perf		*/
