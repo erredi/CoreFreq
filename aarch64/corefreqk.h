@@ -551,6 +551,22 @@ typedef struct {
 	void			(*SetTarget)(void *arg);
 } SYSTEM_DRIVER;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
+	#define PROT_SMP_FUNC(fn)	int fn(void *arg)
+#else
+	#define smp_call_on_cpu(cpu, fn, par, phys) work_on_cpu(cpu, fn, par)
+	#define PROT_SMP_FUNC(fn)	long fn(void *arg)
+#endif
+
+#define DECL_SMP_FUNC(fn)	static PROT_SMP_FUNC(fn)
+
+#define IMPL_SMP_FUNC(fn, ...)						\
+	DECL_SMP_FUNC(fn)						\
+	{								\
+		__VA_ARGS__						\
+		return 0;						\
+	}
+
 typedef struct {
 	char			**Brand;
 	enum CODENAME		CN;
@@ -561,8 +577,8 @@ typedef struct
 	struct	SIGNATURE	Signature;
 	void			(*Query)(unsigned int cpu);
 	void			(*Update)(void *arg);	/* Must be static */
-	void			(*Start)(void *arg);	/* Must be static */
-	void			(*Stop)(void *arg);	/* Must be static */
+	PROT_SMP_FUNC(		(*Start));	/* Must be static */
+	PROT_SMP_FUNC(		(*Stop));	/* Must be static */
 	void			(*Exit)(void);
 	void			(*Timer)(unsigned int cpu);
 	CLOCK			(*BaseClock)(unsigned int ratio);
@@ -586,8 +602,8 @@ typedef struct
 static CLOCK BaseClock_GenericMachine(unsigned int ratio) ;
 static void Query_GenericMachine(unsigned int cpu) ;
 static void PerCore_GenericMachine(void *arg) ;
-static void Start_GenericMachine(void *arg) ;
-static void Stop_GenericMachine(void *arg) ;
+DECL_SMP_FUNC(Start_GenericMachine) ;
+DECL_SMP_FUNC(Stop_GenericMachine) ;
 static void InitTimer_GenericMachine(unsigned int cpu) ;
 static void Query_DynamIQ(unsigned int cpu) ;
 static void Query_CoherentMesh(unsigned int cpu) ;

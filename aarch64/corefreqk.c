@@ -3505,35 +3505,7 @@ static void PerCore_Compute_ACPI_CPPC(CORE_RO *Core)
     {
 	unsigned long long scaledFreq;
 
-	if (PUBLIC(RO(Proc))->Features.OSPM_EPP) {
-		Get_EPP_ACPI_CPPC(Core->Bind);
-	}
-
-	Compute_ACPI_CPPC_Bounds(Core->Bind);
-
-	Core->PowerThermal.HWP_Capabilities.Highest = \
-			Core->PowerThermal.ACPI_CPPC.Highest;
-
-	Core->PowerThermal.HWP_Capabilities.Guaranteed = \
-			Core->PowerThermal.ACPI_CPPC.Guaranteed;
-
-	Core->PowerThermal.HWP_Capabilities.Most_Efficient = \
-			Core->PowerThermal.ACPI_CPPC.Efficient;
-
-	Core->PowerThermal.HWP_Capabilities.Lowest = \
-			Core->PowerThermal.ACPI_CPPC.Lowest;
-
-	Core->PowerThermal.HWP_Request.Minimum_Perf = \
-			Core->PowerThermal.ACPI_CPPC.Minimum;
-
-	Core->PowerThermal.HWP_Request.Maximum_Perf = \
-			Core->PowerThermal.ACPI_CPPC.Maximum;
-
-	Core->PowerThermal.HWP_Request.Desired_Perf = \
-			Core->PowerThermal.ACPI_CPPC.Desired;
-
-	Core->PowerThermal.HWP_Request.Energy_Pref = \
-			Core->PowerThermal.ACPI_CPPC.Energy;
+	Read_ACPI_CPPC_Registers(Core->Bind, NULL);
 
 	scaledFreq = Core->PowerThermal.ACPI_CPPC.Minimum
 		   * Core->PowerThermal.ACPI_CPPC.Efficient;
@@ -3778,9 +3750,9 @@ static void Controller_Start(int wait)
 			&PRIVATE(OF(Core, AT(cpu)))->ThermalWork,
 			msecs_to_jiffies(PUBLIC(RO(Proc))->SleepInterval)
 		);
-		smp_call_function_single(cpu,
-					Arch[PUBLIC(RO(Proc))->ArchID].Start,
-					NULL, wait);
+		smp_call_on_cpu(cpu,
+				Arch[PUBLIC(RO(Proc))->ArchID].Start,
+				NULL, false);
 	}
       }
     }
@@ -3795,9 +3767,9 @@ static void Controller_Stop(int wait)
 	    if ((BITVAL(PRIVATE(OF(Core, AT(cpu)))->Join.TSM, CREATED) == 1)
 	     && (BITVAL(PRIVATE(OF(Core, AT(cpu)))->Join.TSM, STARTED) == 1))
 	    {
-		smp_call_function_single(cpu,
-					Arch[PUBLIC(RO(Proc))->ArchID].Stop,
-					NULL, wait);
+		smp_call_on_cpu(cpu,
+				Arch[PUBLIC(RO(Proc))->ArchID].Stop,
+				NULL, false);
 
 		cancel_delayed_work_sync(
 				&PRIVATE(OF(Core, AT(cpu)))->ThermalWork
@@ -4663,8 +4635,8 @@ static void (*Platform_Setup[])(CORE_RO*, union SAVE_AREA_CORE*) = {
 	[PFM_DGX_SPARK] = Setup_DGX_Spark_GX10
 };
 
-static void Start_GenericMachine(void *arg)
-{
+IMPL_SMP_FUNC(/*func:*/ Start_GenericMachine, /*body:*/ {
+
 	unsigned int cpu = smp_processor_id();
 	CORE_RO *Core = (CORE_RO *) PUBLIC(RO(Core, AT(cpu)));
 	union SAVE_AREA_CORE *Save = &PRIVATE(OF(Core, AT(cpu)))->SaveArea;
@@ -4690,10 +4662,10 @@ static void Start_GenericMachine(void *arg)
 			HRTIMER_MODE_REL_PINNED);
 
 	BITSET(LOCKLESS, PRIVATE(OF(Core, AT(cpu)))->Join.TSM, STARTED);
-}
+});
 
-static void Stop_GenericMachine(void *arg)
-{
+IMPL_SMP_FUNC(/*func:*/ Stop_GenericMachine, /*body:*/ {
+
 	unsigned int cpu = smp_processor_id();
 	CORE_RO *Core = (CORE_RO *) PUBLIC(RO(Core, AT(cpu)));
 	union SAVE_AREA_CORE *Save = &PRIVATE(OF(Core, AT(cpu)))->SaveArea;
@@ -4714,7 +4686,7 @@ static void Stop_GenericMachine(void *arg)
 	PerCore_Reset(Core);
 
 	BITCLR(LOCKLESS, PRIVATE(OF(Core, AT(cpu)))->Join.TSM, STARTED);
-}
+});
 
 static long Sys_OS_Driver_Query(void)
 {
@@ -6515,9 +6487,9 @@ static int CoreFreqK_HotPlug_CPU_Online(unsigned int cpu)
 			&PRIVATE(OF(Core, AT(cpu)))->ThermalWork,
 			msecs_to_jiffies(PUBLIC(RO(Proc))->SleepInterval)
 		);
-		smp_call_function_single(cpu,
-					Arch[PUBLIC(RO(Proc))->ArchID].Start,
-					NULL, 0);
+		smp_call_on_cpu(cpu,
+				Arch[PUBLIC(RO(Proc))->ArchID].Start,
+				NULL, false);
     }
    }
 #if defined(CONFIG_CPU_IDLE) && LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
@@ -6544,9 +6516,9 @@ static int CoreFreqK_HotPlug_CPU_Offline(unsigned int cpu)
     if ((BITVAL(PRIVATE(OF(Core, AT(cpu)))->Join.TSM, CREATED) == 1)
      && (BITVAL(PRIVATE(OF(Core, AT(cpu)))->Join.TSM, STARTED) == 1)
      && (Arch[PUBLIC(RO(Proc))->ArchID].Stop != NULL)) {
-	smp_call_function_single(cpu,
-				Arch[PUBLIC(RO(Proc))->ArchID].Stop,
-				NULL, 1);
+	smp_call_on_cpu(cpu,
+			Arch[PUBLIC(RO(Proc))->ArchID].Stop,
+			NULL, false);
 
 	cancel_delayed_work_sync(&PRIVATE(OF(Core, AT(cpu)))->ThermalWork);
     }
@@ -6571,15 +6543,15 @@ static int CoreFreqK_HotPlug_CPU_Offline(unsigned int cpu)
       {
 	if ((BITVAL(PRIVATE(OF(Core, AT(alt)))->Join.TSM, STARTED) == 1)
 	 && (Arch[PUBLIC(RO(Proc))->ArchID].Stop != NULL)) {
-		smp_call_function_single(alt,
-					Arch[PUBLIC(RO(Proc))->ArchID].Stop,
-					NULL, 1);
+		smp_call_on_cpu(alt,
+				Arch[PUBLIC(RO(Proc))->ArchID].Stop,
+				NULL, false);
 	}
 	if ((BITVAL(PRIVATE(OF(Core, AT(alt)))->Join.TSM, STARTED) == 0)
 	 && (Arch[PUBLIC(RO(Proc))->ArchID].Start != NULL)) {
-		smp_call_function_single(alt,
-					Arch[PUBLIC(RO(Proc))->ArchID].Start,
-					NULL, 0);
+		smp_call_on_cpu(alt,
+				Arch[PUBLIC(RO(Proc))->ArchID].Start,
+				NULL, false);
 	}
       }
      }
@@ -7402,7 +7374,11 @@ static int CoreFreqK_Ignition_Level_Up(INIT_ARG *pArg)
 	}
 #endif /* CONFIG_PM_OPP */
 	if (PUBLIC(RO(Proc))->Features.ACPI) {
+		CORE_RO *Core = PUBLIC( RO(Core,
+					AT(PUBLIC(RO(Proc))->Service.Core)) );
+
 		ReCompute_FactoryFrequency();
+		PerCore_Compute_ACPI_CPPC(Core);
 	}
 #ifdef CONFIG_HOTPLUG_CPU
 	#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)

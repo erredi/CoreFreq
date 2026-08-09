@@ -46,9 +46,6 @@ typedef struct
 	struct {
 		enum THERM_PWR_EVENTS	Events[eDIM];
 	};
-	HWP_CAPABILITIES		HWP_Capabilities;
-	HWP_INTERRUPT			HWP_Interrupt;
-	HWP_REQUEST			HWP_Request;
 	struct ACPI_CPPC_STRUCT {
 		unsigned int		Highest,
 					Guaranteed,
