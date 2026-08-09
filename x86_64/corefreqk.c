@@ -14948,7 +14948,7 @@ static void Controller_Start(int wait)
 	{
 		smp_call_on_cpu(cpu,
 				Arch[PUBLIC(RO(Proc))->ArchID].Start,
-				NULL, false);
+				NULL, true);
 	}
       }
     }
@@ -14965,7 +14965,7 @@ static void Controller_Stop(int wait)
 	    {
 		smp_call_on_cpu(cpu,
 				Arch[PUBLIC(RO(Proc))->ArchID].Stop,
-				NULL, false);
+				NULL, true);
 	    }
     }
 }
@@ -24684,7 +24684,7 @@ static int CoreFreqK_HotPlug_CPU_Online(unsigned int cpu)
      && (Arch[PUBLIC(RO(Proc))->ArchID].Start != NULL)) {
 	smp_call_on_cpu(cpu,
 			Arch[PUBLIC(RO(Proc))->ArchID].Start,
-			NULL, false);
+			NULL, true);
     }
    }
 #if defined(CONFIG_CPU_IDLE) && LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
@@ -24717,7 +24717,7 @@ static int CoreFreqK_HotPlug_CPU_Offline(unsigned int cpu)
      && (Arch[PUBLIC(RO(Proc))->ArchID].Stop != NULL)) {
 	smp_call_on_cpu(cpu,
 			Arch[PUBLIC(RO(Proc))->ArchID].Stop,
-			NULL, false);
+			NULL, true);
     }
 	PUBLIC(RO(Proc))->CPU.OnLine--;
 	BITSET(LOCKLESS, PUBLIC(RO(Core, AT(cpu)))->OffLine, OS);
@@ -24742,13 +24742,13 @@ static int CoreFreqK_HotPlug_CPU_Offline(unsigned int cpu)
 	 && (Arch[PUBLIC(RO(Proc))->ArchID].Stop != NULL)) {
 		smp_call_on_cpu(alt,
 				Arch[PUBLIC(RO(Proc))->ArchID].Stop,
-				NULL, false);
+				NULL, true);
 	}
 	if ((BITVAL(PRIVATE(OF(Core, AT(alt)))->Join.TSM, STARTED) == 0)
 	 && (Arch[PUBLIC(RO(Proc))->ArchID].Start != NULL)) {
 		smp_call_on_cpu(alt,
 				Arch[PUBLIC(RO(Proc))->ArchID].Start,
-				NULL, false);
+				NULL, true);
 	}
       }
      }
