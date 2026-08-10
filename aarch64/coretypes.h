@@ -1190,19 +1190,7 @@ typedef struct	/* BSP features.					*/
 		_Unused1_	:  3-1,
 		PLN		:  4-3,
 		PTM		:  5-4,
-		HWP_Reg 	:  6-5,
-/*		HCF_Cap 	:  7-6,
-		HWP_Int 	:  1
-		HWP_Act 	:  1
-		HWP_EPP 	:  1
-		HWP_Pkg 	:  1
-		HWP_HPrf	:  1
-		HWP_PECI	:  1
-		HWP_Flex	:  1
-		HWP_Fast	:  1
-		HWFB_Cap	:  1
-		HWP_Idle	:  1	*/
-		_Unused2_	: 32-6;
+		_Unused2_	: 32-5;
 	} Power;
 
 	struct {

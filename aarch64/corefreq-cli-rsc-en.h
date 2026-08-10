@@ -1034,7 +1034,6 @@
 #define RSC_PERF_MON_PPC_CODE_EN	"Performance Present Capabilities"
 #define RSC_PERF_MON_CPC_CODE_EN	"Continuous Performance Control"
 #define RSC_PERF_MON_CST_CODE_EN	"ACPI Processor C-States"
-#define RSC_PERF_MON_HWP_CODE_EN	"Hardware-Controlled Performance States"
 #define RSC_PERF_MON_LOW_PWR_CODE_EN	"Low Power Methods"
 #define RSC_PERF_MON_WFI_CODE_EN	"Wait for Interrupt"
 #define RSC_PERF_MON_WFE_CODE_EN	"Wait for Event"

@@ -846,8 +846,6 @@ void JsonSysInfo(RO(SHM_STRUCT) *RO(Shm))
 				json_literal(&s, "%u", (unsigned) RO(Shm)->Proc.Features.Power.PLN);
 				json_key(&s, "PTM");
 				json_literal(&s, "%u", (unsigned) RO(Shm)->Proc.Features.Power.PTM);
-				json_key(&s, "HWP_Registers");
-				json_literal(&s, "%u", (unsigned) RO(Shm)->Proc.Features.Power.HWP_Reg);
 
 				json_end_object(&s);
 			}

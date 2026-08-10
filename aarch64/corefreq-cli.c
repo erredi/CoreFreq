@@ -3771,8 +3771,7 @@ REASON_CODE SysInfoPerfCaps(	Window *win,
 		RSC(SYSINFO_PERFMON_COND4).ATTR()
 	};
 	unsigned int bix;
-	bix = (RO(Shm)->Proc.Features.Power.HWP_Reg == 1)
-	|| (RO(Shm)->Proc.Features.ACPI_CPPC == 1);
+	bix = RO(Shm)->Proc.Features.ACPI_CPPC == 1;
     if (bix)
     {
 	ATTRIBUTE *HWP_Cap_Attr[2] = {
@@ -3782,8 +3781,6 @@ REASON_CODE SysInfoPerfCaps(	Window *win,
 	unsigned int cpu;
 
 	bix = RO(Shm)->Proc.Features.HWP_Enable == 1;
-     if  (RO(Shm)->Proc.Features.Power.HWP_Reg == 0)
-     {
       if (RO(Shm)->Proc.Features.ACPI_CPPC == 1)
       {
 	GridHover( PUT( BOXKEY_FMW_CPPC,
@@ -3801,13 +3798,6 @@ REASON_CODE SysInfoPerfCaps(	Window *win,
 			RSC(PERF_LABEL_CPPC).CODE(), ENABLED(bix) ),
 		HWP_Update);
       }
-     } else {
-	GridCall( PUT(	BOXKEY_HWP, attrib[bix], width, 2,
-			"%s%.*s%s       <%3s>", RSC(PERF_MON_HWP).CODE(),
-			width - 18 - RSZ(PERF_MON_HWP), hSpace,
-			RSC(PERF_LABEL_HWP).CODE(), ENABLED(bix) ),
-		HWP_Update);
-     }
 	PUT(	SCANKEY_NULL, attrib[0], width, 3,
 		"%s     %s      %s     %s        %s",
 		RSC(CAPABILITIES).CODE(),
@@ -3862,14 +3852,6 @@ REASON_CODE SysInfoPerfCaps(	Window *win,
 		Refresh_HWP_Cap_Freq, cpu);
       }
     }
-	const unsigned int cix	= ((RO(Shm)->Proc.Features.HWP_Enable == 1)
-				|| (RO(Shm)->Proc.Features.ACPI_CPPC == 1));
-
-	PUT(	SCANKEY_NULL, attrib[bix], width, 2,
-		"%s%.*s%s       [%3s]", RSC(PERF_MON_HWP).CODE(),
-		width - 18 - RSZ(PERF_MON_HWP), hSpace,
-		RSC(PERF_LABEL_HWP).CODE(), ENABLED(cix) );
-
 	return reason;
 }
 
@@ -7815,8 +7797,7 @@ Window *CreateSysInfo(unsigned long long id)
 	Coordinate winOrigin = {.col = 3, .row = TOP_HEADER_ROW + 2};
 	CUINT winWidth = 74;
 	unsigned int cellPadding = 0, hwp_cppc = \
-			(RO(Shm)->Proc.Features.Power.HWP_Reg == 1)
-		||	(RO(Shm)->Proc.Features.ACPI_CPPC == 1)
+			(RO(Shm)->Proc.Features.ACPI_CPPC == 1)
 		||	(RO(Shm)->Proc.Features.HWP_Enable == 1);
 
 	switch (id) {
