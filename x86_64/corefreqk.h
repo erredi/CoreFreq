@@ -3937,7 +3937,8 @@ enum {
 };
 
 enum {
-	CN_STRIX_HALO
+	CN_STRIX_HALO,
+	CN_GORGON_HALO
 };
 
 enum {
@@ -4070,7 +4071,8 @@ static char *Arch_AMD_Zen5_KRK[] = ZLIST(
 		[CN_GORGON_POINT2]	=	"Zen5/Krackan/Gorgon Point"
 );
 static char *Arch_AMD_Zen5_STXH[] = ZLIST(
-		[CN_STRIX_HALO] 	=	"Zen5/Strix Halo"
+		[CN_STRIX_HALO] 	=	"Zen5/Strix Halo",
+		[CN_GORGON_HALO]	=	"Zen5/Gorgon Halo"
 );
 static char *Arch_AMD_Zen5_SHP[] = ZLIST(
 		[CN_SHIMADA_PEAK] 	=	"Zen5/Shimada Peak"
@@ -10390,6 +10392,18 @@ static PROCESSOR_SPECIFIC AMD_Zen5_Turin_Specific[] = {
 	{0}
 };
 static PROCESSOR_SPECIFIC AMD_Zen5_STXH_Specific[] = {
+	{
+	.Brand = ZLIST("AMD Ryzen AI Max+ PRO 495"),
+	.Boost = {+21, 0},
+	.Param.Offset = {100, 0, 0},
+	.CodeNameIdx = CN_GORGON_HALO,
+	.TgtRatioUnlocked = 1,
+	.ClkRatioUnlocked = 0b10,
+	.TurboUnlocked = 0,
+	.UncoreUnlocked = 0,
+	.HSMP_Capable = 0,
+	.Latch=LATCH_TGT_RATIO_UNLOCK|LATCH_CLK_RATIO_UNLOCK|LATCH_TURBO_UNLOCK
+	},
 	{
 	.Brand = ZLIST( "AMD RYZEN AI MAX+ PRO 395",	\
 			"AMD RYZEN AI MAX+ 395" 	),
