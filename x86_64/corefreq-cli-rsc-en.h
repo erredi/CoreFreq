@@ -1227,6 +1227,7 @@
 #define RSC_FEATURES_MPX_CODE_EN	"Memory Protection Extensions"
 #define RSC_FEATURES_MSR_CODE_EN	"Model Specific Registers"
 #define RSC_FEATURES_MTRR_CODE_EN	"Memory Type Range Registers"
+#define RSC_FEATURES_NP_CODE_EN 	"Nested Paging"
 #define RSC_FEATURES_NX_CODE_EN 	"No-Execute Page Protection"
 #define RSC_FEATURES_OSXSAVE_CODE_EN	"OS-Enabled Ext. State Management"
 #define RSC_FEATURES_OSVW_CODE_EN	"OS Visible Work-around"

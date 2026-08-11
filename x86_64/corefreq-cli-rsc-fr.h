@@ -686,6 +686,7 @@ do echo -en "$h$l\t""\xc3""\x$h$l""\t"; done; done;echo
 #define RSC_FEATURES_MPX_CODE_FR	"Memory Protection Extensions"
 #define RSC_FEATURES_MSR_CODE_FR	"Model Specific Registers"
 #define RSC_FEATURES_MTRR_CODE_FR	"Memory Type Range Registers"
+#define RSC_FEATURES_NP_CODE_FR 	"Nested Paging"
 #define RSC_FEATURES_NX_CODE_FR 	"No-Execute Page Protection"
 #define RSC_FEATURES_OSXSAVE_CODE_FR	"OS-Enabled Ext. State Management"
 #define RSC_FEATURES_OSVW_CODE_FR	"OS Visible Work-around"

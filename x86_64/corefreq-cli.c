@@ -3083,6 +3083,16 @@ REASON_CODE SysInfoFeatures(	Window *win,
 		NULL
 	},
 	{
+		(unsigned int[]) { CRC_AMD, CRC_HYGON, 0 },
+		BITVAL(RO(Shm)->Cpu[RO(Shm)->Proc.Service.Core].CpuID[
+			CPUID_8000000A_00000000_SVM_REVISION
+		].reg[REG_CPUID_EDX], CPUID_8000000A_00000000_EDX_NP),
+		attr_Feat,
+		2, "%s%.*sNP   [%7s]", RSC(FEATURES_NP).CODE(),
+		width - 17 - RSZ(FEATURES_NP),
+		NULL
+	},
+	{
 		NULL,
 		RO(Shm)->Proc.Features.ExtInfo.EDX.NX == 1,
 		attr_Feat,
