@@ -1237,6 +1237,8 @@
 #define RSC_FEATURES_PCONFIG_CODE_EN	"Platform Configuration"
 #define RSC_FEATURES_PCID_CODE_EN	"Process Context Identifiers"
 #define RSC_FEATURES_PDCM_CODE_EN	"Perfmon and Debug Capability"
+#define RSC_FEATURES_PKS_CODE_EN	"Protection Keys for Supervisor pages"
+#define RSC_FEATURES_PKU_CODE_EN	"Protection Keys for User-mode pages"
 #define RSC_FEATURES_PGE_CODE_EN	"Page Global Enable"
 #define RSC_FEATURES_PSE_CODE_EN	"Page Size Extension"
 #define RSC_FEATURES_PSE36_CODE_EN	"36-bit Page Size Extension"

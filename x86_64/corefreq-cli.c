@@ -3166,6 +3166,22 @@ REASON_CODE SysInfoFeatures(	Window *win,
 	},
 	{
 		NULL,
+		RO(Shm)->Proc.Features.ExtFeature.ECX.PKS == 1,
+		attr_Feat,
+		2, "%s%.*sPKS   [%7s]", RSC(FEATURES_PKS).CODE(),
+		width - 18 - RSZ(FEATURES_PKS),
+		NULL
+	},
+	{
+		NULL,
+		RO(Shm)->Proc.Features.ExtFeature.ECX.PKU == 1,
+		attr_Feat,
+		2, "%s%.*sPKU   [%7s]", RSC(FEATURES_PKU).CODE(),
+		width - 18 - RSZ(FEATURES_PKU),
+		NULL
+	},
+	{
+		NULL,
 		RO(Shm)->Proc.Features.Std.EDX.PGE == 1,
 		attr_Feat,
 		2, "%s%.*sPGE   [%7s]", RSC(FEATURES_PGE).CODE(),

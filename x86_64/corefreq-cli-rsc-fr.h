@@ -696,6 +696,8 @@ do echo -en "$h$l\t""\xc3""\x$h$l""\t"; done; done;echo
 #define RSC_FEATURES_PCONFIG_CODE_FR	"Platform Configuration"
 #define RSC_FEATURES_PCID_CODE_FR	"Process Context Identifiers"
 #define RSC_FEATURES_PDCM_CODE_FR	"Perfmon and Debug Capability"
+#define RSC_FEATURES_PKS_CODE_FR	"Protection Keys for Supervisor pages"
+#define RSC_FEATURES_PKU_CODE_FR	"Protection Keys for User-mode pages"
 #define RSC_FEATURES_PGE_CODE_FR	"Page Global Enable"
 #define RSC_FEATURES_PSE_CODE_FR	"Page Size Extension"
 #define RSC_FEATURES_PSE36_CODE_FR	"36-bit Page Size Extension"
