@@ -2093,12 +2093,18 @@ typedef union
 	struct {
 		unsigned long long		/* NHM, SNB: Thread	*/
 		VMCS_RevId	: 31-0,
-		ReservedBits1	: 32-31,
-		VMCS_Size	: 48-32,
+		MBZ		: 32-31,
+		VMCS_Size	: 45-32, /* greater than 0 and at most 4096 */
+		ReservedBits1	: 48-45,
 		PhysAddrWidth	: 49-48,
 		SMM_DualMon	: 50-49,
-		VMCS_Type	: 54-50,
-		ReservedBits2	: 64-54;
+		VMCS_Type	: 54-50, /* 0:Uncacheable(UC);6:Write Back(WB)*/
+		VM_EXIT_INS_OUTS: 55-54,
+		VMX_CTLS_MSR	: 56-55,
+		HW_Exception	: 57-56,
+		ReservedBits2	: 58-57,
+		Nested_Exception: 59-58,
+		ReservedBits3	: 64-59;
 	};
 } VMX_BASIC;
 
