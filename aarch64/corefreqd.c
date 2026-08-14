@@ -2153,7 +2153,7 @@ REASON_CODE Child_Manager(REF *Ref)
 			pthread_join(Arg[cpu].TID, NULL);
 			Arg[cpu].TID = 0;
 		}
-	} else {
+	} else if (!Arg[cpu].TID) {
 		volatile unsigned long long seed64;
 		unsigned int seed32;
 		__asm__ volatile
@@ -2173,15 +2173,13 @@ REASON_CODE Child_Manager(REF *Ref)
 	    #else
 		initstate(seed32, RO(Shm)->Cpu[cpu].Slice.Random.state, 128);
 	    #endif
-		if (!Arg[cpu].TID) {
-			/*	Add this child thread.			*/
-			Arg[cpu].Ref  = Ref;
-			Arg[cpu].Bind = cpu;
-			pthread_create( &Arg[cpu].TID,
-					NULL,
-					Child_Thread,
-					&Arg[cpu]);
-		}
+		/*		Add this child thread.			*/
+		Arg[cpu].Ref  = Ref;
+		Arg[cpu].Bind = cpu;
+		pthread_create( &Arg[cpu].TID,
+				NULL,
+				Child_Thread,
+				&Arg[cpu]);
 	}
     }
 	ServerFollowService(&localService, &RO(Shm)->Proc.Service, tid);
