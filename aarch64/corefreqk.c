@@ -2714,6 +2714,9 @@ static signed int Get_ACPI_CPPC_Registers(unsigned int cpu, void *arg)
 			Core->Bind, rc);
 	}
 	if (rc == 0) {
+	    #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
+		unsigned long long desired_perf = 0;
+	    #endif
 		Core->PowerThermal.ACPI_CPPC = (struct ACPI_CPPC_STRUCT) {
 			.Highest	= CPPC_Caps.highest_perf,
 			#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
@@ -2727,16 +2730,39 @@ static signed int Get_ACPI_CPPC_Registers(unsigned int cpu, void *arg)
 			.Efficient	= CPPC_Caps.nominal_freq,
 			.Lowest 	= CPPC_Caps.lowest_freq,
 			.Minimum	= CPPC_Caps.lowest_freq,
-			.Desired	= CPPC_Perf.reference_perf,
 			#else
 			.Efficient	= CPPC_Caps.nominal_perf,
 			.Lowest 	= CPPC_Caps.lowest_perf,
 			.Minimum	= CPPC_Caps.lowest_perf,
-			.Desired	= CPPC_Caps.reference_perf,
 			#endif
 			.Maximum	= CPPC_Caps.highest_perf,
+			#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0) \
+			 && LINUX_VERSION_CODE < KERNEL_VERSION(7, 1, 0)
+			.Desired	= CPPC_Perf.reference_perf,
+			#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0) \
+			    && LINUX_VERSION_CODE < KERNEL_VERSION(7, 1, 0)) \
+			    || LINUX_VERSION_CODE >= KERNEL_VERSION(7, 1, 0)
+			.Desired	= CPPC_Caps.reference_perf,
+			#else
+			.Desired	= 0,
+			#endif
 			.Energy 	= 0
 		};
+	    #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
+		#if (defined(CONFIG_SCHED_BORE) || defined(CONFIG_CACHY)) \
+		 && (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
+		rc = cppc_get_desired_perf(Core->Bind, &desired_perf);
+		rc = rc == -EINVAL ? 0 : rc;
+		#else
+		rc = cppc_get_desired_perf(Core->Bind, &desired_perf);
+		#endif
+	    if (rc == 0) {
+		Core->PowerThermal.ACPI_CPPC.Desired = desired_perf;
+	    } else {
+		 pr_debug("CoreFreq: cppc_get_desired_perf(cpu=%u) error %d\n",
+			Core->Bind, rc);
+	    }
+	    #endif
 	}
 	return rc;
 #else
